@@ -52,8 +52,12 @@ struct AccountDetailView: View {
                                 
                                 let codeString = account.displayCode.replacingOccurrences(of: " ", with: "")
                                 Text(codeString.map { String($0) }.joined(separator: " "))
-                                    .font(.system(size: 32, weight: .regular, design: .monospaced))
+                                    .font(.system(size: 28, weight: .regular, design: .monospaced))
                                     .foregroundColor(.primary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.75)
+                                    .monospacedDigit()
+                                    .layoutPriority(1)
                                 
                                 Spacer()
                                 
