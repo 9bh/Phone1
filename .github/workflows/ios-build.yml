@@ -51,3 +51,92 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             clean build
+
+  build-unsigned-ipa:
+    name: Create Unsigned iPhone IPA
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build unsigned VaultX for iPhone
+        run: |
+          set -euo pipefail
+
+          xcodebuild \
+            -project "VaultX.xcodeproj" \
+            -scheme "VaultX" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$RUNNER_TEMP/VaultXDeviceDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Locate application bundle
+        id: locate_app
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_PATH="$RUNNER_TEMP/VaultXDeviceDerivedData/Build/Products/Release-iphoneos/VaultX.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "VaultX.app was not found at the expected path."
+            find "$RUNNER_TEMP/VaultXDeviceDerivedData" -name "*.app" -type d -print
+            exit 1
+          fi
+
+          echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Create unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUTPUT_DIR="$RUNNER_TEMP/VaultXUnsignedIPA"
+          PAYLOAD_DIR="$OUTPUT_DIR/Payload"
+
+          rm -rf "$OUTPUT_DIR"
+          mkdir -p "$PAYLOAD_DIR"
+
+          cp -R "${{ steps.locate_app.outputs.app_path }}" "$PAYLOAD_DIR/VaultX.app"
+
+          cd "$OUTPUT_DIR"
+          /usr/bin/zip -qry "VaultX-unsigned.ipa" "Payload"
+
+          shasum -a 256 "VaultX-unsigned.ipa" > "VaultX-unsigned.ipa.sha256"
+
+          test -s "VaultX-unsigned.ipa"
+          test -s "VaultX-unsigned.ipa.sha256"
+
+      - name: Inspect unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IPA="$RUNNER_TEMP/VaultXUnsignedIPA/VaultX-unsigned.ipa"
+
+          unzip -l "$IPA"
+
+          if ! unzip -l "$IPA" | grep -q "Payload/VaultX.app/"; then
+            echo "Invalid IPA structure: Payload/VaultX.app is missing."
+            exit 1
+          fi
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VaultX-unsigned-ipa
+          path: |
+            ${{ runner.temp }}/VaultXUnsignedIPA/VaultX-unsigned.ipa
+            ${{ runner.temp }}/VaultXUnsignedIPA/VaultX-unsigned.ipa.sha256
+          if-no-files-found: error
+          retention-days: 14
