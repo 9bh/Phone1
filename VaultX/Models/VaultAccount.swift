@@ -7,6 +7,7 @@ struct VaultAccount: Identifiable, Codable {
     var password: String
     var username: String
     var notes: String
+    var has2FA: Bool = false
     
     var serviceName: String {
         let source = !siteURL.isEmpty ? siteURL : email

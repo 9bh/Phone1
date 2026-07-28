@@ -119,8 +119,8 @@ struct VaultHomeView: View {
 #Preview("With 2 Accounts") {
     VaultHomeView()
         .environmentObject(VaultAccountsStore(accounts: [
-            VaultAccount(siteURL: "google.com", email: "user@gmail.com", password: "", username: "", notes: ""),
-            VaultAccount(siteURL: "", email: "", password: "", username: "user@microsoft.com", notes: "")
+            VaultAccount(siteURL: "google.com", email: "user@gmail.com", password: "", username: "", notes: "", has2FA: true),
+            VaultAccount(siteURL: "", email: "", password: "", username: "user@microsoft.com", notes: "", has2FA: false)
         ]))
         .preferredColorScheme(.dark)
 }

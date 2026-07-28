@@ -32,26 +32,30 @@ struct AccountCardView: View {
                 Spacer(minLength: 16)
                 
                 // Circular Timer on the far right
-                ZStack {
-                    Circle()
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 3)
-                        .frame(width: 28, height: 28)
-                    
-                    Circle()
-                        .trim(from: 0, to: 0.7)
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                        .frame(width: 28, height: 28)
-                        .rotationEffect(.degrees(-90))
+                if account.has2FA {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.secondary.opacity(0.3), lineWidth: 3)
+                            .frame(width: 28, height: 28)
+                        
+                        Circle()
+                            .trim(from: 0, to: 0.7)
+                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .frame(width: 28, height: 28)
+                            .rotationEffect(.degrees(-90))
+                    }
                 }
             }
             
             // Bottom Row
-            HStack {
-                let codeString = account.displayCode.replacingOccurrences(of: " ", with: "")
-                Text(codeString.map { String($0) }.joined(separator: " "))
-                    .font(.system(size: 34, weight: .regular, design: .rounded))
-                    .foregroundColor(.accentColor)
-                Spacer()
+            if account.has2FA {
+                HStack {
+                    let codeString = account.displayCode.replacingOccurrences(of: " ", with: "")
+                    Text(codeString.map { String($0) }.joined(separator: " "))
+                        .font(.system(size: 34, weight: .regular, design: .rounded))
+                        .foregroundColor(.accentColor)
+                    Spacer()
+                }
             }
         }
         .padding(20)

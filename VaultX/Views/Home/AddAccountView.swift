@@ -10,6 +10,8 @@ struct AddAccountView: View {
     @State private var username = ""
     @State private var notes = ""
     @State private var isPasswordVisible = false
+    @State private var has2FA = false
+    @State private var hasBackupFile = false
     
     var body: some View {
         ZStack {
@@ -39,7 +41,8 @@ struct AddAccountView: View {
                             email: email,
                             password: password,
                             username: username,
-                            notes: notes
+                            notes: notes,
+                            has2FA: has2FA
                         )
                         store.addAccount(newAccount)
                         dismiss()
@@ -67,54 +70,43 @@ struct AddAccountView: View {
                         
                         // 2FA Section
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("مولد 2FA:")
+                            Text("التحقق بخطوتين (2FA):")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             
-                            VStack(spacing: 16) {
-                                HStack {
-                                    Image(systemName: "shield.checkerboard")
-                                        .foregroundColor(.accentColor)
-                                        .font(.system(size: 28))
-                                    
-                                    Spacer()
-                                    
-                                    Text("123 456")
-                                        .font(.system(size: 32, weight: .regular, design: .monospaced))
-                                        .foregroundColor(.primary)
-                                    
-                                    Spacer()
-                                    
-                                    // Circular Timer Placeholder
-                                    ZStack {
-                                        Circle()
-                                            .stroke(Color.secondary.opacity(0.3), lineWidth: 3)
-                                            .frame(width: 24, height: 24)
-                                        
-                                        Circle()
-                                            .trim(from: 0, to: 0.7)
-                                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                                            .frame(width: 24, height: 24)
-                                            .rotationEffect(.degrees(-90))
-                                    }
-                                }
-                                .environment(\.layoutDirection, .leftToRight)
-                                
+                            if !has2FA {
                                 Button(action: {
-                                    // visual only
+                                    has2FA = true
                                 }) {
-                                    Text("نسخ الرمز")
-                                        .font(.body.weight(.medium))
-                                        .foregroundColor(.white)
+                                    Label("إضافة 2FA", systemImage: "plus.circle")
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
-                                        .background(Color.accentColor)
+                                        .background(Color(uiColor: .secondarySystemGroupedBackground))
                                         .cornerRadius(10)
                                 }
+                                .foregroundColor(.accentColor)
+                            } else {
+                                VStack(spacing: 8) {
+                                    HStack {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .foregroundColor(.green)
+                                        Text("تمت إضافة 2FA")
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                        Spacer()
+                                    }
+                                    
+                                    HStack {
+                                        Text("سيتم تفعيل مولد الرمز لهذا الحساب")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                    }
+                                }
+                                .padding()
+                                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                                .cornerRadius(12)
                             }
-                            .padding()
-                            .background(Color(uiColor: .secondarySystemGroupedBackground))
-                            .cornerRadius(12)
                         }
                         
                         // Backup Codes Section
@@ -124,7 +116,9 @@ struct AddAccountView: View {
                                 .foregroundColor(.secondary)
                             
                             HStack(spacing: 12) {
-                                Button(action: {}) {
+                                Button(action: {
+                                    hasBackupFile = true
+                                }) {
                                     Label("تحميل ملف", systemImage: "arrow.up.doc")
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
@@ -132,12 +126,14 @@ struct AddAccountView: View {
                                         .cornerRadius(10)
                                 }
                                 
-                                Button(action: {}) {
-                                    Label("عرض", systemImage: "doc.text.magnifyingglass")
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 12)
-                                        .background(Color(uiColor: .secondarySystemGroupedBackground))
-                                        .cornerRadius(10)
+                                if hasBackupFile {
+                                    Button(action: {}) {
+                                        Label("عرض", systemImage: "doc.text.magnifyingglass")
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 12)
+                                            .background(Color(uiColor: .secondarySystemGroupedBackground))
+                                            .cornerRadius(10)
+                                    }
                                 }
                             }
                             .foregroundColor(.accentColor)
