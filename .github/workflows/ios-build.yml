@@ -1,0 +1,53 @@
+name: VaultX iOS Build
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build VaultX for iOS Simulator
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Validate Xcode project
+        run: |
+          set -e
+          echo "Repository directory:"
+          pwd
+
+          echo "Xcode projects:"
+          find . -name "*.xcodeproj" -print
+
+          echo "Shared schemes:"
+          find . -path "*.xcodeproj/xcshareddata/xcschemes/*.xcscheme" -print
+
+      - name: Show VaultX schemes
+        run: |
+          xcodebuild \
+            -project "VaultX.xcodeproj" \
+            -list
+
+      - name: Build VaultX
+        run: |
+          set -o pipefail
+
+          xcodebuild \
+            -project "VaultX.xcodeproj" \
+            -scheme "VaultX" \
+            -configuration Debug \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/VaultXDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            clean build
