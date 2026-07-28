@@ -58,8 +58,11 @@ struct VaultHomeView: View {
                 } else {
                     List {
                         ForEach(store.accounts) { account in
-                            NavigationLink(value: account) {
+                            NavigationLink {
+                                AccountDetailView(account: account)
+                            } label: {
                                 AccountCardView(account: account)
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 6)
                                     .contentShape(Rectangle())
                             }
@@ -94,34 +97,26 @@ struct VaultHomeView: View {
             }
             .environment(\.layoutDirection, .rightToLeft) // Ensure RTL layout for Arabic text
             
-            // Floating Add Button
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button {
-                        showingAddAccount = true
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(Color.accentColor)
-                                .frame(width: 56, height: 56)
-                            
-                            Image(systemName: "plus")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .frame(width: 60, height: 60) // Minimum 44x44 touch target
-                    .padding(.trailing, 24)
-                    .padding(.bottom, 24)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Button {
+                showingAddAccount = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentColor)
+                        .frame(width: 56, height: 56)
+                    
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
                 }
-                .environment(\.layoutDirection, .leftToRight) // Force physical right corner
             }
+            .frame(width: 60, height: 60)
+            .padding(.trailing, 24)
+            .padding(.bottom, 24)
+            .environment(\.layoutDirection, .leftToRight)
         }
-        }
-        .navigationDestination(for: VaultAccount.self) { account in
-            AccountDetailView(account: account)
         }
         .sheet(isPresented: $showingAddAccount) {
             AddAccountView()

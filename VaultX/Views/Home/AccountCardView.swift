@@ -69,6 +69,7 @@ struct AccountCardView: View {
             }
         }
         .padding(20)
+        .frame(maxWidth: .infinity)
         .background(Color(uiColor: .secondarySystemBackground))
         .cornerRadius(20)
         .environment(\.layoutDirection, .leftToRight) // Force physical layout
