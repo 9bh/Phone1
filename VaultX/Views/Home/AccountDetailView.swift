@@ -57,6 +57,17 @@ struct AccountDetailView: View {
                                 
                                 Spacer()
                                 
+                                Button(action: {
+                                    copyToClipboard(account.displayCode, field: .twoFA)
+                                }) {
+                                    Image(systemName: copiedField == .twoFA ? "checkmark" : "doc.on.doc")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(copiedField == .twoFA ? .green : .primary)
+                                        .frame(width: 44, height: 44)
+                                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                        .cornerRadius(10)
+                                }
+                                
                                 // Circular Timer Placeholder
                                 ZStack {
                                     Circle()
@@ -71,21 +82,6 @@ struct AccountDetailView: View {
                                 }
                             }
                             .environment(\.layoutDirection, .leftToRight)
-                            
-                            Button(action: {
-                                copyToClipboard(account.displayCode, field: .twoFA)
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: copiedField == .twoFA ? "checkmark" : "doc.on.doc")
-                                    Text(copiedField == .twoFA ? "تم النسخ" : "نسخ الرمز")
-                                }
-                                .font(.body.weight(.medium))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(copiedField == .twoFA ? Color.green : Color.accentColor)
-                                .cornerRadius(10)
-                            }
                         }
                         .padding()
                         .background(Color(uiColor: .secondarySystemGroupedBackground))
@@ -140,8 +136,11 @@ struct AccountDetailView: View {
                                 copyToClipboard(account.notes, field: .notes)
                             }) {
                                 Image(systemName: copiedField == .notes ? "checkmark" : "doc.on.doc")
-                                    .foregroundColor(copiedField == .notes ? .green : .secondary)
-                                    .padding(8)
+                                    .font(.system(size: 20))
+                                    .foregroundColor(copiedField == .notes ? .green : .primary)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                    .cornerRadius(10)
                             }
                         }
                         .padding()
@@ -175,8 +174,11 @@ struct AccountDetailView: View {
                     copyToClipboard(value, field: field)
                 }) {
                     Image(systemName: copiedField == field ? "checkmark" : "doc.on.doc")
-                        .foregroundColor(copiedField == field ? .green : .secondary)
-                        .padding(8)
+                        .font(.system(size: 20))
+                        .foregroundColor(copiedField == field ? .green : .primary)
+                        .frame(width: 44, height: 44)
+                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .cornerRadius(10)
                 }
             }
             .padding(12)
@@ -209,16 +211,22 @@ struct AccountDetailView: View {
                     isPasswordVisible.toggle()
                 }) {
                     Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
-                        .foregroundColor(.secondary)
-                        .padding(8)
+                        .font(.system(size: 20))
+                        .foregroundColor(.primary)
+                        .frame(width: 44, height: 44)
+                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .cornerRadius(10)
                 }
                 
                 Button(action: {
                     copyToClipboard(account.password, field: .password)
                 }) {
                     Image(systemName: copiedField == .password ? "checkmark" : "doc.on.doc")
-                        .foregroundColor(copiedField == .password ? .green : .secondary)
-                        .padding(8)
+                        .font(.system(size: 20))
+                        .foregroundColor(copiedField == .password ? .green : .primary)
+                        .frame(width: 44, height: 44)
+                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .cornerRadius(10)
                 }
             }
             .padding(12)

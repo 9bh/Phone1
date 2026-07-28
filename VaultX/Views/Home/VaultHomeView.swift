@@ -5,7 +5,6 @@ struct VaultHomeView: View {
     @State private var showingAddAccount = false
     @State private var accountBeingEdited: VaultAccount?
     @State private var accountPendingDeletion: VaultAccount?
-    @State private var accountBeingViewed: VaultAccount?
     
     var body: some View {
         NavigationStack {
@@ -59,9 +58,7 @@ struct VaultHomeView: View {
                 } else {
                     List {
                         ForEach(store.accounts) { account in
-                            Button {
-                                accountBeingViewed = account
-                            } label: {
+                            NavigationLink(value: account) {
                                 AccountCardView(account: account)
                                     .padding(.vertical, 6)
                                     .contentShape(Rectangle())
@@ -123,7 +120,7 @@ struct VaultHomeView: View {
             }
         }
         }
-        .navigationDestination(item: $accountBeingViewed) { account in
+        .navigationDestination(for: VaultAccount.self) { account in
             AccountDetailView(account: account)
         }
         .sheet(isPresented: $showingAddAccount) {
