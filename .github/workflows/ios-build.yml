@@ -135,8 +135,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: VaultX-unsigned-ipa
-          path: |
-            ${{ runner.temp }}/VaultXUnsignedIPA/VaultX-unsigned.ipa
-            ${{ runner.temp }}/VaultXUnsignedIPA/VaultX-unsigned.ipa.sha256
+          path: ${{ runner.temp }}/VaultXUnsignedIPA/VaultX-unsigned.ipa
           if-no-files-found: error
           retention-days: 14

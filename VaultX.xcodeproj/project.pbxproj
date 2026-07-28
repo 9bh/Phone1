@@ -53,7 +53,7 @@
 				<string>18DDA0AB53D04EABA4B45CED</string>
 				<string>F8B969F0B22A4A7A88398CA5</string>
 				<string>2261772CE0ED4F078684F0E1</string>
-				<string>B553EE394EB44400AE56BCE9</string>
+				<string>B553EE394EB44400AE56BCEA</string>
 				<string>343A1EF9215A49C5B97657B6</string>
 				<string>CE27ACE478324090B8ED2CFC</string>
 				<string>058DA669E74340C192249587</string>
@@ -512,7 +512,7 @@
 				<string>4981C47179DE4BC89E3DCBD7</string>
 				<string>5A8C672D0FB54EBDAFC41C42</string>
 				<string>DB66260B388A44E8BA4250F9</string>
-				<string>A4B03FF3D6FB46C5BC3F27B4</string>
+				<string>A4B03FF3D6FB46C5BC3F27B5</string>
 				<string>230950C222674580BEE4E775</string>
 				<string>A50B1EA5BD6347439622ADE8</string>
 				<string>D7E7B5E847E04E78ACB7B8D1</string>
@@ -715,14 +715,14 @@
 			<key>runOnlyForDeploymentPostprocessing</key>
 			<string>0</string>
 		</dict>
-		<key>A4B03FF3D6FB46C5BC3F27B4</key>
+		<key>A4B03FF3D6FB46C5BC3F27B5</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXFileReference</string>
 			<key>lastKnownFileType</key>
 			<string>sourcecode.swift</string>
 			<key>path</key>
-			<string>Views/UnlockedPlaceholderView.swift</string>
+			<string>Views/Home/VaultHomeView.swift</string>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
@@ -823,10 +823,10 @@
 			<key>isa</key>
 			<string>XCConfigurationList</string>
 		</dict>
-		<key>B553EE394EB44400AE56BCE9</key>
+		<key>B553EE394EB44400AE56BCEA</key>
 		<dict>
 			<key>fileRef</key>
-			<string>A4B03FF3D6FB46C5BC3F27B4</string>
+			<string>A4B03FF3D6FB46C5BC3F27B5</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>

@@ -15,7 +15,7 @@ struct AppRootView: View {
             case .locked:
                 VaultLockView()
             case .unlocked:
-                UnlockedPlaceholderView()
+                VaultHomeView()
             }
         }
         .animation(.easeInOut, value: appState.currentState)
