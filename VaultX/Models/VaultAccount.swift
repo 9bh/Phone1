@@ -1,6 +1,6 @@
 import Foundation
 
-struct VaultAccount: Identifiable, Codable {
+struct VaultAccount: Identifiable, Codable, Hashable {
     var id = UUID()
     var siteURL: String
     var email: String
@@ -8,6 +8,7 @@ struct VaultAccount: Identifiable, Codable {
     var username: String
     var notes: String
     var has2FA: Bool = false
+    var hasBackupFile: Bool = false
     
     var serviceName: String {
         let source = !siteURL.isEmpty ? siteURL : email

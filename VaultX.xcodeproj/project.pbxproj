@@ -58,6 +58,7 @@
 				<string>B553EE394EB44400AE56BCEC</string>
 				<string>B553EE394EB44400AE56BCED</string>
 				<string>B553EE394EB44400AE56BCEE</string>
+				<string>B553EE394EB44400AE56BCEF</string>
 				<string>343A1EF9215A49C5B97657B6</string>
 				<string>CE27ACE478324090B8ED2CFC</string>
 				<string>058DA669E74340C192249587</string>
@@ -521,6 +522,7 @@
 				<string>A4B03FF3D6FB46C5BC3F27B7</string>
 				<string>A4B03FF3D6FB46C5BC3F27B8</string>
 				<string>A4B03FF3D6FB46C5BC3F27B9</string>
+				<string>A4B03FF3D6FB46C5BC3F27BA</string>
 				<string>230950C222674580BEE4E775</string>
 				<string>A50B1EA5BD6347439622ADE8</string>
 				<string>D7E7B5E847E04E78ACB7B8D1</string>
@@ -778,6 +780,17 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
+		<key>A4B03FF3D6FB46C5BC3F27BA</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Views/Home/AccountDetailView.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
 		<key>A50B1EA5BD6347439622ADE8</key>
 		<dict>
 			<key>isa</key>
@@ -907,6 +920,13 @@
 		<dict>
 			<key>fileRef</key>
 			<string>A4B03FF3D6FB46C5BC3F27B9</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>B553EE394EB44400AE56BCEF</key>
+		<dict>
+			<key>fileRef</key>
+			<string>A4B03FF3D6FB46C5BC3F27BA</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>

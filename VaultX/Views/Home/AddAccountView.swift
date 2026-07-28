@@ -13,6 +13,19 @@ struct AddAccountView: View {
     @State private var has2FA = false
     @State private var hasBackupFile = false
     
+    var accountToEdit: VaultAccount?
+    
+    init(accountToEdit: VaultAccount? = nil) {
+        self.accountToEdit = accountToEdit
+        _siteURL = State(initialValue: accountToEdit?.siteURL ?? "")
+        _email = State(initialValue: accountToEdit?.email ?? "")
+        _password = State(initialValue: accountToEdit?.password ?? "")
+        _username = State(initialValue: accountToEdit?.username ?? "")
+        _notes = State(initialValue: accountToEdit?.notes ?? "")
+        _has2FA = State(initialValue: accountToEdit?.has2FA ?? false)
+        _hasBackupFile = State(initialValue: accountToEdit?.hasBackupFile ?? false)
+    }
+    
     var body: some View {
         ZStack {
             Color(uiColor: .systemGroupedBackground)
@@ -29,22 +42,37 @@ struct AddAccountView: View {
                     
                     Spacer()
                     
-                    Text("إضافة حساب")
+                    Text(accountToEdit == nil ? "إضافة حساب" : "تعديل الحساب")
                         .font(.headline)
                         .foregroundColor(.primary)
                     
                     Spacer()
                     
                     Button(action: {
-                        let newAccount = VaultAccount(
-                            siteURL: siteURL,
-                            email: email,
-                            password: password,
-                            username: username,
-                            notes: notes,
-                            has2FA: has2FA
-                        )
-                        store.addAccount(newAccount)
+                        if let existing = accountToEdit {
+                            let updatedAccount = VaultAccount(
+                                id: existing.id,
+                                siteURL: siteURL,
+                                email: email,
+                                password: password,
+                                username: username,
+                                notes: notes,
+                                has2FA: has2FA,
+                                hasBackupFile: hasBackupFile
+                            )
+                            store.updateAccount(updatedAccount)
+                        } else {
+                            let newAccount = VaultAccount(
+                                siteURL: siteURL,
+                                email: email,
+                                password: password,
+                                username: username,
+                                notes: notes,
+                                has2FA: has2FA,
+                                hasBackupFile: hasBackupFile
+                            )
+                            store.addAccount(newAccount)
+                        }
                         dismiss()
                     }) {
                         Text("حفظ")
@@ -214,8 +242,14 @@ struct AddAccountView: View {
 }
 
 #if DEBUG
-#Preview {
+#Preview("New Account") {
     AddAccountView()
+        .environmentObject(VaultAccountsStore())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Edit Account") {
+    AddAccountView(accountToEdit: VaultAccount(siteURL: "google.com", email: "user@gmail.com", password: "password123", username: "user123", notes: "Some notes", has2FA: true, hasBackupFile: false))
         .environmentObject(VaultAccountsStore())
         .preferredColorScheme(.dark)
 }

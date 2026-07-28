@@ -3,9 +3,13 @@ import SwiftUI
 struct VaultHomeView: View {
     @EnvironmentObject var store: VaultAccountsStore
     @State private var showingAddAccount = false
+    @State private var accountBeingEdited: VaultAccount?
+    @State private var accountPendingDeletion: VaultAccount?
+    @State private var accountBeingViewed: VaultAccount?
     
     var body: some View {
-        ZStack {
+        NavigationStack {
+            ZStack {
             // Background
             Color(uiColor: .systemBackground)
                 .ignoresSafeArea()
@@ -35,9 +39,9 @@ struct VaultHomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 
-                Spacer()
                 
                 if store.accounts.isEmpty {
+                    Spacer()
                     // Empty State
                     VStack(spacing: 12) {
                         Text("لا توجد حسابات مضافة حتى الآن")
@@ -53,15 +57,42 @@ struct VaultHomeView: View {
                     
                     Spacer()
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(store.accounts) { account in
+                    List {
+                        ForEach(store.accounts) { account in
+                            Button {
+                                accountBeingViewed = account
+                            } label: {
                                 AccountCardView(account: account)
+                                    .padding(.vertical, 6)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .environment(\.layoutDirection, .leftToRight)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    accountPendingDeletion = account
+                                } label: {
+                                    Label("حذف", systemImage: "trash")
+                                }
+                                
+                                Button {
+                                    accountBeingEdited = account
+                                } label: {
+                                    Label("تعديل", systemImage: "pencil")
+                                }
+                                .tint(.blue)
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 80) // Leave space for floating button
+                        
+                        // Spacer for floating button
+                        Color.clear.frame(height: 80)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
+                    .listStyle(.plain)
                 }
             }
             .environment(\.layoutDirection, .rightToLeft) // Ensure RTL layout for Arabic text
@@ -91,8 +122,25 @@ struct VaultHomeView: View {
                 .environment(\.layoutDirection, .leftToRight) // Force physical right corner
             }
         }
+        }
+        .navigationDestination(item: $accountBeingViewed) { account in
+            AccountDetailView(account: account)
+        }
         .sheet(isPresented: $showingAddAccount) {
             AddAccountView()
+        }
+        .sheet(item: $accountBeingEdited) { account in
+            AddAccountView(accountToEdit: account)
+        }
+        .alert(item: $accountPendingDeletion) { account in
+            Alert(
+                title: Text("حذف الحساب"),
+                message: Text("هل أنت متأكد من حذف هذا الحساب؟"),
+                primaryButton: .destructive(Text("حذف")) {
+                    store.deleteAccount(id: account.id)
+                },
+                secondaryButton: .cancel(Text("إلغاء"))
+            )
         }
     }
 }

@@ -23,10 +23,20 @@ struct AccountCardView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    Text(!account.email.isEmpty ? account.email : account.username)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+                    if !account.username.isEmpty {
+                        let formattedUsername = account.username.hasPrefix("@") ? account.username : "@\(account.username)"
+                        Text(formattedUsername)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    if !account.email.isEmpty {
+                        Text(account.email)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
                 }
                 
                 Spacer(minLength: 16)
