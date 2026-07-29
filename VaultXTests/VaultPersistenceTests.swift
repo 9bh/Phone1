@@ -1059,7 +1059,12 @@ actor MockVaultFilesystemClient: VaultFilesystemClient {
             await checkSuspension(for: .replaceExisting)
             if faultPoint == .replaceExisting || faultPoint2 == .replaceExisting { throw NSError(domain: "test", code: 1) }
         }
-        return try fm.replaceItemAt(originalItemURL, withItemAt: newItemURL, backupItemName: backupItemName, options: [])
+        return try fm.replaceItemAt(
+            originalItemURL,
+            withItemAt: newItemURL,
+            backupItemName: backupItemName,
+            options: backupItemName == nil ? [] : [.withoutDeletingBackupItem]
+        )
     }
     
     func removeItem(at url: URL) async throws { try fm.removeItem(at: url) }

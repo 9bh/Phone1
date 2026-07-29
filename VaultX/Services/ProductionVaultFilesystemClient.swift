@@ -31,7 +31,12 @@ actor ProductionVaultFilesystemClient: VaultFilesystemClient {
     }
     
     func replaceItemAt(_ originalItemURL: URL, withItemAt newItemURL: URL, backupItemName: String?) async throws -> URL? {
-        try fm.replaceItemAt(originalItemURL, withItemAt: newItemURL, backupItemName: backupItemName, options: [])
+        try fm.replaceItemAt(
+            originalItemURL,
+            withItemAt: newItemURL,
+            backupItemName: backupItemName,
+            options: backupItemName == nil ? [] : [.withoutDeletingBackupItem]
+        )
     }
     
     func removeItem(at url: URL) async throws {
