@@ -49,41 +49,56 @@ struct AddAccountView: View {
                     Spacer()
                     
                     Button(action: {
-                        if let existing = accountToEdit {
-                            let updatedAccount = VaultAccount(
-                                id: existing.id,
-                                siteURL: siteURL,
-                                email: email,
-                                password: password,
-                                username: username,
-                                notes: notes,
-                                has2FA: has2FA,
-                                hasBackupFile: hasBackupFile
-                            )
-                            store.updateAccount(updatedAccount)
-                        } else {
-                            let newAccount = VaultAccount(
-                                siteURL: siteURL,
-                                email: email,
-                                password: password,
-                                username: username,
-                                notes: notes,
-                                has2FA: has2FA,
-                                hasBackupFile: hasBackupFile
-                            )
-                            store.addAccount(newAccount)
+                        guard !store.isMutationInProgress else { return }
+                        Task {
+                            if let existing = accountToEdit {
+                                let updatedAccount = VaultAccount(
+                                    id: existing.id,
+                                    siteURL: siteURL,
+                                    email: email,
+                                    password: password,
+                                    username: username,
+                                    notes: notes,
+                                    has2FA: has2FA,
+                                    hasBackupFile: hasBackupFile
+                                )
+                                let result = await store.updateAccount(updatedAccount)
+                                if case .success = result {
+                                    dismiss()
+                                }
+                            } else {
+                                let newAccount = VaultAccount(
+                                    siteURL: siteURL,
+                                    email: email,
+                                    password: password,
+                                    username: username,
+                                    notes: notes,
+                                    has2FA: has2FA,
+                                    hasBackupFile: hasBackupFile
+                                )
+                                let result = await store.addAccount(newAccount)
+                                if case .success = result {
+                                    dismiss()
+                                }
+                            }
                         }
-                        dismiss()
                     }) {
-                        Text("حفظ")
-                            .font(.body.weight(.semibold))
-                            .foregroundColor((siteURL.isEmpty && email.isEmpty && username.isEmpty) ? .secondary : .accentColor)
+                        if store.isMutationInProgress {
+                            ProgressView()
+                        } else {
+                            Text("حفظ")
+                                .font(.body.weight(.semibold))
+                                .foregroundColor((siteURL.isEmpty && email.isEmpty && username.isEmpty) ? .secondary : .accentColor)
+                        }
                     }
-                    .disabled(siteURL.isEmpty && email.isEmpty && username.isEmpty)
+                    .disabled(store.isMutationInProgress || (siteURL.isEmpty && email.isEmpty && username.isEmpty))
                 }
                 .padding()
                 .background(Color(uiColor: .secondarySystemGroupedBackground))
                 .environment(\.layoutDirection, .leftToRight)
+                .alert(item: $store.storageAlert) { alert in
+                    Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("حسناً")))
+                }
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -244,13 +259,13 @@ struct AddAccountView: View {
 #if DEBUG
 #Preview("New Account") {
     AddAccountView()
-        .environmentObject(VaultAccountsStore())
+        .environmentObject(VaultAccountsStore.preview())
         .preferredColorScheme(.dark)
 }
 
 #Preview("Edit Account") {
     AddAccountView(accountToEdit: VaultAccount(siteURL: "google.com", email: "user@gmail.com", password: "password123", username: "user123", notes: "Some notes", has2FA: true, hasBackupFile: false))
-        .environmentObject(VaultAccountsStore())
+        .environmentObject(VaultAccountsStore.preview())
         .preferredColorScheme(.dark)
 }
 #endif

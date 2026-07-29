@@ -3,9 +3,23 @@ import SwiftUI
 @main
 struct VaultXApp: App {
     @StateObject private var appState = AppLockState()
-    @StateObject private var accountsStore = VaultAccountsStore()
+    @StateObject private var accountsStore: VaultAccountsStore
     @Environment(\.scenePhase) private var scenePhase
-    
+
+    init() {
+        let filesystem = ProductionVaultFilesystemClient()
+        let keychainClient = ProductionVaultKeychainClient()
+        let keyStore = KeychainVaultEncryptionKeyStore(client: keychainClient)
+        let persistence = EncryptedVaultAccountsPersistence(
+            keyStore: keyStore,
+            filesystem: filesystem
+        )
+
+        _accountsStore = StateObject(
+            wrappedValue: VaultAccountsStore(persistence: persistence)
+        )
+    }
+
     var body: some Scene {
         WindowGroup {
             AppRootView()

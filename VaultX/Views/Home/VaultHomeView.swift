@@ -84,6 +84,7 @@ struct VaultHomeView: View {
                                     Label("تعديل", systemImage: "pencil")
                                 }
                                 .tint(.blue)
+                                .disabled(store.isMutationInProgress)
                             }
                         }
                         
@@ -113,6 +114,7 @@ struct VaultHomeView: View {
                 }
             }
             .frame(width: 60, height: 60)
+            .disabled(store.isMutationInProgress)
             .padding(.trailing, 24)
             .padding(.bottom, 24)
             .environment(\.layoutDirection, .leftToRight)
@@ -129,10 +131,16 @@ struct VaultHomeView: View {
                 title: Text("حذف الحساب"),
                 message: Text("هل أنت متأكد من حذف هذا الحساب؟"),
                 primaryButton: .destructive(Text("حذف")) {
-                    store.deleteAccount(id: account.id)
+                    guard !store.isMutationInProgress else { return }
+                    Task {
+                        _ = await store.deleteAccount(id: account.id)
+                    }
                 },
                 secondaryButton: .cancel(Text("إلغاء"))
             )
+        }
+        .alert(item: $store.storageAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("حسناً")))
         }
     }
 }
@@ -140,25 +148,25 @@ struct VaultHomeView: View {
 #if DEBUG
 #Preview("Dark Mode") {
     VaultHomeView()
-        .environmentObject(VaultAccountsStore())
+        .environmentObject(VaultAccountsStore.preview())
         .preferredColorScheme(.dark)
 }
 
 #Preview("Light Mode") {
     VaultHomeView()
-        .environmentObject(VaultAccountsStore())
+        .environmentObject(VaultAccountsStore.preview())
         .preferredColorScheme(.light)
 }
 
 #Preview("Small iPhone") {
     VaultHomeView()
-        .environmentObject(VaultAccountsStore())
+        .environmentObject(VaultAccountsStore.preview())
         .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
 }
 
 #Preview("With 2 Accounts") {
     VaultHomeView()
-        .environmentObject(VaultAccountsStore(accounts: [
+        .environmentObject(VaultAccountsStore.preview(accounts: [
             VaultAccount(siteURL: "google.com", email: "user@gmail.com", password: "", username: "", notes: "", has2FA: true),
             VaultAccount(siteURL: "", email: "", password: "", username: "user@microsoft.com", notes: "", has2FA: false)
         ]))

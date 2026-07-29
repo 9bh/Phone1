@@ -2,7 +2,8 @@ import SwiftUI
 
 struct AppRootView: View {
     @EnvironmentObject var appState: AppLockState
-    
+    @EnvironmentObject var accountsStore: VaultAccountsStore
+
     var body: some View {
         Group {
             switch appState.currentState {
@@ -15,10 +16,46 @@ struct AppRootView: View {
             case .locked:
                 VaultLockView()
             case .unlocked:
-                VaultHomeView()
+                unlockedView
             }
         }
         .animation(.easeInOut, value: appState.currentState)
+        .task(id: appState.currentState) {
+            if appState.currentState == .unlocked {
+                await accountsStore.unlockAndLoad()
+            } else {
+                accountsStore.lockAndClear()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var unlockedView: some View {
+        switch accountsStore.loadState {
+        case .locked, .loading:
+            ProgressView("جاري تحميل الحسابات...")
+        case .loaded:
+            VaultHomeView()
+        case .failed:
+            VStack(spacing: 16) {
+                Text("تعذر الوصول إلى الخزنة")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("تعذر تحميل بيانات الحسابات بأمان. لم يتم حذف بياناتك.")
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal)
+
+                Button("إعادة المحاولة") {
+                    Task {
+                        await accountsStore.retryLoad()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .environment(\.layoutDirection, .rightToLeft)
+        }
     }
 }
 
@@ -26,5 +63,6 @@ struct AppRootView: View {
 #Preview {
     AppRootView()
         .environmentObject(AppLockState.preview(state: .needsPasscodeSetup))
+        .environmentObject(VaultAccountsStore.preview(loadState: .locked))
 }
 #endif

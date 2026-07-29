@@ -66,6 +66,26 @@
 				<string>5D5AE00291284E6CB4A343CC</string>
 				<string>5AFABC52239E413B95CC0B0A</string>
 				<string>6FF357B94F0C41E5B6227FF2</string>
+				<string>F52FFE1F0B0B46BE94E34B5E</string>
+				<string>3FBFAE2EFEB3428484FE8DA5</string>
+				<string>CACCC52CA1DF4A55A2713B9F</string>
+				<string>C704342E6FDB42C4BB381077</string>
+				<string>D956D85C8C894209B8D557D8</string>
+				<string>44A1C4D36CD24BB3B889D717</string>
+				<string>56EAFAA9D7104CCE85C7495F</string>
+				<string>87DE52E5DA974E098856C9E2</string>
+				<string>AD58B89560824861A0794602</string>
+				<string>A8D9467CEB2B46EFB6BC1494</string>
+				<string>4E57E9A46EE0423F95CA35F7</string>
+				<string>AF48D158AE6341F58EB4B412</string>
+				<string>B9FFC872F6E34A5BAF851D12</string>
+				<string>C78EAECE2ED845B4858546FF</string>
+				<string>8BDC3B4A2DC94D198F33AF6B</string>
+				<string>B51A1C1C865A4FC882E48EDD</string>
+				<string>ACC341E84209461E81A08AC3</string>
+				<string>6FB34895C6B943F0BE647508</string>
+				<string>F50E697668844416ABACF36C</string>
+				<string>5B2B5FE483314538B7D94C92</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -132,7 +152,6 @@
 				<string>AccentColor</string>
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
-
 				<key>ENABLE_PREVIEWS</key>
 				<string>YES</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -192,6 +211,8 @@
 				<string>8FFC03F1938243F881657401</string>
 				<string>BACECF5B56D2478E9BBF60F1</string>
 				<string>27180A9DFA8345BC88692A43</string>
+				<string>D2E5DA60A38D4FE1B5A62934</string>
+				<string>890C8E8B4BBB4F4FAEFFC6ED</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -350,6 +371,8 @@
 				<string>4B86B37D89964D0687DCE373</string>
 				<string>AB16A1C3542C483295E982EF</string>
 				<string>BD2266C8618D4A60B30EE9C8</string>
+				<string>C0D54C1D055842C1897DE647</string>
+				<string>884CAFE1019143D59F1C11B5</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -532,6 +555,26 @@
 				<string>5F6A576515734B0DB68F6274</string>
 				<string>86403C505DC74F01807D7447</string>
 				<string>7DC0D52C142F4D1394E555A3</string>
+				<string>155D194331A64EA584533A1A</string>
+				<string>BE799F8343CE4D648D088B80</string>
+				<string>719A03EA40FD41108BDF5EE8</string>
+				<string>B9914AEC7D9B43AFAD5C7258</string>
+				<string>E0ADA9A8168A4847BC7098E0</string>
+				<string>FE75061F0567420BA78FD044</string>
+				<string>E4AA6762C6CB4C4F8D0C8C92</string>
+				<string>575EB0013EB9467AA2F54D01</string>
+				<string>B426ACB4E8D64A20AA3FDE13</string>
+				<string>332BDAC327DE4CF795572346</string>
+				<string>268B0B65B9964AAE858B4F4F</string>
+				<string>45B9D1D6CA914E1ABC904170</string>
+				<string>AEC0B00EBE2E46BB9562B2C8</string>
+				<string>E0F2A83786754F5F870A330C</string>
+				<string>6DF739F523E143B3BA8D05C7</string>
+				<string>C3567D1C7C3B48F2B4B279F5</string>
+				<string>1A03C34B78E4438BB2874847</string>
+				<string>6E57715FFA4044638330B4CD</string>
+				<string>3C086570B5D14724BFC0BBF2</string>
+				<string>943E0FDCB9BE4AC288421415</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -830,7 +873,6 @@
 				<string>AccentColor</string>
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
-
 				<key>ENABLE_PREVIEWS</key>
 				<string>YES</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -1307,6 +1349,402 @@
 		<dict>
 			<key>fileRef</key>
 			<string>E2C3E454A6284EEC89603448</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>155D194331A64EA584533A1A</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Models/VaultFileEnvelope.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>F52FFE1F0B0B46BE94E34B5E</key>
+		<dict>
+			<key>fileRef</key>
+			<string>155D194331A64EA584533A1A</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>BE799F8343CE4D648D088B80</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Models/VaultPersistenceError.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>3FBFAE2EFEB3428484FE8DA5</key>
+		<dict>
+			<key>fileRef</key>
+			<string>BE799F8343CE4D648D088B80</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>719A03EA40FD41108BDF5EE8</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>PreviewSupport/PreviewVaultAccountsPersistence.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>CACCC52CA1DF4A55A2713B9F</key>
+		<dict>
+			<key>fileRef</key>
+			<string>719A03EA40FD41108BDF5EE8</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>B9914AEC7D9B43AFAD5C7258</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>PreviewSupport/PreviewVaultEncryptionKeyStore.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C704342E6FDB42C4BB381077</key>
+		<dict>
+			<key>fileRef</key>
+			<string>B9914AEC7D9B43AFAD5C7258</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>E0ADA9A8168A4847BC7098E0</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/AsyncFIFOTransactionGate.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>D956D85C8C894209B8D557D8</key>
+		<dict>
+			<key>fileRef</key>
+			<string>E0ADA9A8168A4847BC7098E0</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>FE75061F0567420BA78FD044</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/EncryptedVaultAccountsPersistence.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>44A1C4D36CD24BB3B889D717</key>
+		<dict>
+			<key>fileRef</key>
+			<string>FE75061F0567420BA78FD044</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>E4AA6762C6CB4C4F8D0C8C92</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/FreshInstallationSecurityPreparing.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>56EAFAA9D7104CCE85C7495F</key>
+		<dict>
+			<key>fileRef</key>
+			<string>E4AA6762C6CB4C4F8D0C8C92</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>575EB0013EB9467AA2F54D01</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/InstallationMarkerStoring.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>87DE52E5DA974E098856C9E2</key>
+		<dict>
+			<key>fileRef</key>
+			<string>575EB0013EB9467AA2F54D01</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>B426ACB4E8D64A20AA3FDE13</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/KeychainVaultEncryptionKeyStore.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AD58B89560824861A0794602</key>
+		<dict>
+			<key>fileRef</key>
+			<string>B426ACB4E8D64A20AA3FDE13</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>332BDAC327DE4CF795572346</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/PasscodeVerifierResetting.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>A8D9467CEB2B46EFB6BC1494</key>
+		<dict>
+			<key>fileRef</key>
+			<string>332BDAC327DE4CF795572346</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>268B0B65B9964AAE858B4F4F</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/ProductionInstallationMarkerStore.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>4E57E9A46EE0423F95CA35F7</key>
+		<dict>
+			<key>fileRef</key>
+			<string>268B0B65B9964AAE858B4F4F</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>45B9D1D6CA914E1ABC904170</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/ProductionPasscodeVerifierResetter.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AF48D158AE6341F58EB4B412</key>
+		<dict>
+			<key>fileRef</key>
+			<string>45B9D1D6CA914E1ABC904170</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>AEC0B00EBE2E46BB9562B2C8</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/ProductionVaultFilesystemClient.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>B9FFC872F6E34A5BAF851D12</key>
+		<dict>
+			<key>fileRef</key>
+			<string>AEC0B00EBE2E46BB9562B2C8</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>E0F2A83786754F5F870A330C</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/ProductionVaultKeychainClient.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C78EAECE2ED845B4858546FF</key>
+		<dict>
+			<key>fileRef</key>
+			<string>E0F2A83786754F5F870A330C</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>6DF739F523E143B3BA8D05C7</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/VaultAccountsPersisting.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>8BDC3B4A2DC94D198F33AF6B</key>
+		<dict>
+			<key>fileRef</key>
+			<string>6DF739F523E143B3BA8D05C7</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>C3567D1C7C3B48F2B4B279F5</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/VaultEncryptionKeyResetting.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>B51A1C1C865A4FC882E48EDD</key>
+		<dict>
+			<key>fileRef</key>
+			<string>C3567D1C7C3B48F2B4B279F5</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>1A03C34B78E4438BB2874847</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/VaultEncryptionKeyStoring.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>ACC341E84209461E81A08AC3</key>
+		<dict>
+			<key>fileRef</key>
+			<string>1A03C34B78E4438BB2874847</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>6E57715FFA4044638330B4CD</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/VaultFilesystemClient.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>6FB34895C6B943F0BE647508</key>
+		<dict>
+			<key>fileRef</key>
+			<string>6E57715FFA4044638330B4CD</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>3C086570B5D14724BFC0BBF2</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/VaultFreshInstallationSecurityPreparer.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>F50E697668844416ABACF36C</key>
+		<dict>
+			<key>fileRef</key>
+			<string>3C086570B5D14724BFC0BBF2</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>943E0FDCB9BE4AC288421415</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/VaultKeychainClient.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>5B2B5FE483314538B7D94C92</key>
+		<dict>
+			<key>fileRef</key>
+			<string>943E0FDCB9BE4AC288421415</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>C0D54C1D055842C1897DE647</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>VaultAccountsStoreTests.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>D2E5DA60A38D4FE1B5A62934</key>
+		<dict>
+			<key>fileRef</key>
+			<string>C0D54C1D055842C1897DE647</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>884CAFE1019143D59F1C11B5</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>VaultPersistenceTests.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>890C8E8B4BBB4F4FAEFFC6ED</key>
+		<dict>
+			<key>fileRef</key>
+			<string>884CAFE1019143D59F1C11B5</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
