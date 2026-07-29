@@ -138,3 +138,86 @@ jobs:
           path: ${{ runner.temp }}/VaultXUnsignedIPA/VaultX-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
+
+  test:
+    name: Run VaultXTests
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Select iPhone Simulator
+        id: select_simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+
+          output = subprocess.check_output(
+              ["xcrun", "simctl", "list", "devices", "available", "-j"]
+          )
+          data = json.loads(output)
+
+          for runtime_devices in data.get("devices", {}).values():
+              for device in runtime_devices:
+                  name = device.get("name", "")
+                  udid = device.get("udid")
+
+                  if name.startswith("iPhone") and udid:
+                      with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output_file:
+                          output_file.write(f"udid={udid}\n")
+
+                      print(f"Selected simulator: {name} ({udid})")
+                      sys.exit(0)
+
+          print("No available iPhone simulator found.", file=sys.stderr)
+          sys.exit(1)
+          PY
+
+      - name: Boot Simulator
+        run: |
+          set -euo pipefail
+          SIMULATOR_UDID="${{ steps.select_simulator.outputs.udid }}"
+          xcrun simctl boot "$SIMULATOR_UDID" || true
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+
+      - name: Run VaultX Tests
+        run: |
+          set -o pipefail
+          SIMULATOR_UDID="${{ steps.select_simulator.outputs.udid }}"
+          xcodebuild \
+            -project "VaultX.xcodeproj" \
+            -scheme "VaultX" \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/VaultXTestDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            clean test
+
+      - name: Shutdown Simulator
+        if: always()
+        run: |
+          SIMULATOR_UDID="${{ steps.select_simulator.outputs.udid }}"
+          if [ -n "$SIMULATOR_UDID" ]; then
+            xcrun simctl shutdown "$SIMULATOR_UDID" || true
+          fi
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VaultX-test-results
+          path: ${{ runner.temp }}/VaultXTestDerivedData/Logs/Test/*.xcresult
+          if-no-files-found: ignore
+          retention-days: 14
