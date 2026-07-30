@@ -317,6 +317,94 @@ final class TOTPTests: XCTestCase {
         XCTAssertEqual(decoded, account)
     }
 
+    // MARK: - otpauth QR parsing
+
+    func testQRCodeParserUsesManualDefaultsWhenParametersAreMissing() throws {
+        let parsed = try TOTPQRCodeParser.parse(
+            "otpauth://totp/Example:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example"
+        )
+
+        XCTAssertEqual(parsed.accountName, "user@example.com")
+        XCTAssertEqual(parsed.issuer, "Example")
+        XCTAssertEqual(parsed.secret, "JBSWY3DPEHPK3PXP")
+        XCTAssertEqual(parsed.algorithm, .sha1)
+        XCTAssertEqual(parsed.digits, 6)
+        XCTAssertEqual(parsed.period, 30)
+    }
+
+    func testQRCodeParserHonorsExplicitQRCodeSettings() throws {
+        let parsed = try TOTPQRCodeParser.parse(
+            "otpauth://totp/Secure:user?secret=JBSWY3DPEHPK3PXP&issuer=Secure&algorithm=SHA256&digits=8&period=60"
+        )
+
+        XCTAssertEqual(parsed.algorithm, .sha256)
+        XCTAssertEqual(parsed.digits, 8)
+        XCTAssertEqual(parsed.period, 60)
+    }
+
+    func testQRCodeParserAcceptsSHA512AndCustomPositivePeriod() throws {
+        let parsed = try TOTPQRCodeParser.parse(
+            "otpauth://totp/Service:user?secret=JBSWY3DPEHPK3PXP&algorithm=SHA512&digits=6&period=45"
+        )
+
+        XCTAssertEqual(parsed.algorithm, .sha512)
+        XCTAssertEqual(parsed.digits, 6)
+        XCTAssertEqual(parsed.period, 45)
+    }
+
+    func testQRCodeParserDecodesPercentEncodedLabel() throws {
+        let parsed = try TOTPQRCodeParser.parse(
+            "otpauth://totp/My%20Service:user%2Btest%40example.com?secret=JBSWY3DPEHPK3PXP"
+        )
+
+        XCTAssertEqual(parsed.issuer, "My Service")
+        XCTAssertEqual(parsed.accountName, "user+test@example.com")
+    }
+
+    func testQRCodeParserNormalizesSecretFormatting() throws {
+        let parsed = try TOTPQRCodeParser.parse(
+            "otpauth://totp/Example:user?secret=jbsw-y3dp-ehpk3pxp%3D"
+        )
+
+        XCTAssertEqual(parsed.secret, "JBSWY3DPEHPK3PXP")
+    }
+
+    func testQRCodeParserRejectsHOTP() {
+        XCTAssertThrowsError(
+            try TOTPQRCodeParser.parse(
+                "otpauth://hotp/Example:user?secret=JBSWY3DPEHPK3PXP&counter=1"
+            )
+        ) { error in
+            XCTAssertEqual(error as? TOTPQRCodeParserError, .unsupportedOTPType)
+        }
+    }
+
+    func testQRCodeParserRejectsMissingSecret() {
+        XCTAssertThrowsError(
+            try TOTPQRCodeParser.parse("otpauth://totp/Example:user?issuer=Example")
+        ) { error in
+            XCTAssertEqual(error as? TOTPQRCodeParserError, .missingSecret)
+        }
+    }
+
+    func testQRCodeParserRejectsUnsupportedDigits() {
+        XCTAssertThrowsError(
+            try TOTPQRCodeParser.parse(
+                "otpauth://totp/Example:user?secret=JBSWY3DPEHPK3PXP&digits=7"
+            )
+        ) { error in
+            XCTAssertEqual(error as? TOTPQRCodeParserError, .unsupportedDigits)
+        }
+    }
+
+    func testQRCodeParserRejectsGoogleMigrationUntilNextPhase() {
+        XCTAssertThrowsError(
+            try TOTPQRCodeParser.parse("otpauth-migration://offline?data=abc")
+        ) { error in
+            XCTAssertEqual(error as? TOTPQRCodeParserError, .unsupportedMigrationFormat)
+        }
+    }
+
     private func assertVectors(
         secret: Data,
         algorithm: TOTPAlgorithm,

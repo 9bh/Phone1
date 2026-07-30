@@ -4,5 +4,7 @@
 <dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>VaultX uses Face ID to securely unlock your vault.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>VaultX uses the camera only to scan two-factor authentication QR codes locally on your device.</string>
 </dict>
 </plist>

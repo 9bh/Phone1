@@ -106,6 +106,9 @@ struct AddAccountView: View {
   @State private var isTotpSecretVisible = false
   @State private var identityError: String?
   @State private var totpError: String?
+  @State private var isShowingQRScanner = false
+  @State private var queuedQRImport: ScannedTOTPAccount?
+  @State private var pendingQRImport: ScannedTOTPAccount?
   @FocusState private var focusedField: AccountEditorFocusField?
 
   var body: some View {
@@ -141,6 +144,20 @@ struct AddAccountView: View {
         message: Text(alert.message),
         dismissButton: .default(Text("حسناً"))
       )
+    }
+    .fullScreenCover(isPresented: $isShowingQRScanner, onDismiss: presentQueuedQRImport) {
+      QRCodeScannerScreen { scannedAccount in
+        queuedQRImport = scannedAccount
+      }
+    }
+    .sheet(item: $pendingQRImport) { scannedAccount in
+      TOTPQRCodeReviewView(
+        scannedAccount: scannedAccount,
+        isDuplicate: isDuplicate(scannedAccount)
+      ) {
+        apply(scannedAccount)
+      }
+      .presentationDetents([.medium, .large])
     }
     .onChange(of: editorSession.siteURL) { _ in clearIdentityErrorWhenPossible() }
     .onChange(of: editorSession.email) { _ in clearIdentityErrorWhenPossible() }
@@ -232,16 +249,28 @@ struct AddAccountView: View {
         .foregroundColor(.secondary)
 
       if !editorSession.has2FA {
-        Button {
-          editorSession.has2FA = true
-        } label: {
-          Label("إضافة 2FA", systemImage: "plus.circle")
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(10)
+        VStack(spacing: 12) {
+          Button {
+            openQRScanner()
+          } label: {
+            Label("مسح رمز QR", systemImage: "qrcode.viewfinder")
+              .font(.body.weight(.semibold))
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 13)
+          }
+          .buttonStyle(.borderedProminent)
+
+          Button {
+            beginManualTOTPEntry()
+          } label: {
+            Label("إدخال المفتاح يدويًا", systemImage: "keyboard")
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 12)
+              .background(Color(uiColor: .secondarySystemGroupedBackground))
+              .cornerRadius(10)
+          }
+          .foregroundColor(.accentColor)
         }
-        .foregroundColor(.accentColor)
       } else {
         VStack(spacing: 16) {
           HStack {
@@ -258,6 +287,9 @@ struct AddAccountView: View {
               editorSession.has2FA = false
               editorSession.totpSecret = ""
               editorSession.totpIssuer = ""
+              editorSession.totpAlgorithm = .sha1
+              editorSession.totpDigits = 6
+              editorSession.totpPeriod = 30
               totpError = nil
               if focusedField == .totpSecret || focusedField == .totpIssuer {
                 focusedField = nil
@@ -312,38 +344,32 @@ struct AddAccountView: View {
             focus: .totpIssuer
           )
 
-          HStack {
-            Text("الخوارزمية:")
-              .font(.subheadline)
-              .foregroundColor(.secondary)
-            Spacer()
-            Picker("الخوارزمية", selection: $editorSession.totpAlgorithm) {
-              Text("SHA1").tag(TOTPAlgorithm.sha1)
-              Text("SHA256").tag(TOTPAlgorithm.sha256)
-              Text("SHA512").tag(TOTPAlgorithm.sha512)
-            }
+          Button {
+            openQRScanner()
+          } label: {
+            Label("مسح QR واستبدال بيانات TOTP", systemImage: "qrcode.viewfinder")
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 12)
+              .background(Color(uiColor: .tertiarySystemGroupedBackground))
+              .cornerRadius(10)
           }
+          .foregroundColor(.accentColor)
 
-          HStack {
-            Text("الخانات:")
-              .font(.subheadline)
+          if editorSession.totpAlgorithm == .sha1
+            && editorSession.totpDigits == 6
+            && editorSession.totpPeriod == 30
+          {
+            Text("الإعدادات القياسية معتمدة تلقائيًا: SHA1 • 6 خانات • 30 ثانية.")
+              .font(.caption)
               .foregroundColor(.secondary)
-            Spacer()
-            Picker("الخانات", selection: $editorSession.totpDigits) {
-              Text("6").tag(6)
-              Text("8").tag(8)
-            }
-          }
-
-          HStack {
-            Text("الفترة:")
-              .font(.subheadline)
+              .multilineTextAlignment(.trailing)
+              .frame(maxWidth: .infinity, alignment: .trailing)
+          } else {
+            Text("تم اعتماد إعدادات رمز QR تلقائيًا: \(editorSession.totpAlgorithm.rawValue.uppercased()) • \(editorSession.totpDigits) خانات • \(editorSession.totpPeriod) ثانية.")
+              .font(.caption)
               .foregroundColor(.secondary)
-            Spacer()
-            Picker("الفترة", selection: $editorSession.totpPeriod) {
-              Text("30").tag(30)
-              Text("60").tag(60)
-            }
+              .multilineTextAlignment(.trailing)
+              .frame(maxWidth: .infinity, alignment: .trailing)
           }
         }
         .padding()
@@ -398,6 +424,62 @@ struct AddAccountView: View {
     }
   }
 
+  private func beginManualTOTPEntry() {
+    editorSession.has2FA = true
+    editorSession.totpAlgorithm = .sha1
+    editorSession.totpDigits = 6
+    editorSession.totpPeriod = 30
+    totpError = nil
+
+    DispatchQueue.main.async {
+      focusedField = .totpSecret
+    }
+  }
+
+  private func openQRScanner() {
+    focusedField = nil
+    queuedQRImport = nil
+    isShowingQRScanner = true
+  }
+
+  private func presentQueuedQRImport() {
+    guard let queuedQRImport else { return }
+    self.queuedQRImport = nil
+    pendingQRImport = queuedQRImport
+  }
+
+  private func apply(_ scannedAccount: ScannedTOTPAccount) {
+    editorSession.has2FA = true
+    editorSession.totpSecret = scannedAccount.secret
+    editorSession.totpIssuer = scannedAccount.issuer
+    editorSession.totpAlgorithm = scannedAccount.algorithm
+    editorSession.totpDigits = scannedAccount.digits
+    editorSession.totpPeriod = scannedAccount.period
+    totpError = nil
+
+    let trimmedAccountName = scannedAccount.accountName
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if trimmedAccountName.contains("@") && editorSession.email.isEmpty {
+      editorSession.email = trimmedAccountName
+    } else if editorSession.username.isEmpty {
+      editorSession.username = trimmedAccountName
+    }
+  }
+
+  private func isDuplicate(_ scannedAccount: ScannedTOTPAccount) -> Bool {
+    let normalizedSecret = TOTPQRCodeParser.normalizeSecret(scannedAccount.secret)
+
+    return store.accounts.contains { account in
+      guard account.id != editorSession.editingAccountID,
+            let existingSecret = account.totpSecret else {
+        return false
+      }
+
+      return TOTPQRCodeParser.normalizeSecret(existingSecret) == normalizedSecret
+    }
+  }
+
   private func validateAndSave(using proxy: ScrollViewProxy) {
     guard !store.isMutationInProgress else { return }
 
@@ -418,16 +500,17 @@ struct AddAccountView: View {
 
     if editorSession.has2FA {
       let trimmedSecret = editorSession.totpSecret.trimmingCharacters(in: .whitespacesAndNewlines)
+      let normalizedSecret = TOTPQRCodeParser.normalizeSecret(trimmedSecret)
 
-      guard !trimmedSecret.isEmpty else {
+      guard !normalizedSecret.isEmpty else {
         totpError = "يجب إدخال المفتاح السري."
         scrollToError(.totpSecret, focus: .totpSecret, using: proxy)
         return
       }
 
       do {
-        _ = try Base32Decoder.decode(trimmedSecret)
-        editorSession.totpSecret = trimmedSecret
+        _ = try Base32Decoder.decode(normalizedSecret)
+        editorSession.totpSecret = normalizedSecret
       } catch {
         totpError = "المفتاح السري غير صالح. أدخل مفتاح Base32 صحيحًا."
         scrollToError(.totpSecret, focus: .totpSecret, using: proxy)

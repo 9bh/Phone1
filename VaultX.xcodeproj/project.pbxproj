@@ -91,6 +91,9 @@
 				<string>E58F78D703B1C774C8F52F37</string>
 				<string>AD56663EDAB73C1F7E3503FF</string>
 				<string>E8CD4E5C0C26BAAE4F2670CD</string>
+				<string>70D4F7B1A91F3B7A64F66D80</string>
+				<string>02A69349A96191AA87399A53</string>
+				<string>3A03153E0A26659C920EE029</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -194,6 +197,8 @@
 				<string>5.0</string>
 				<key>TARGETED_DEVICE_FAMILY</key>
 				<string>1</string>
+				<key>INFOPLIST_KEY_NSCameraUsageDescription</key>
+				<string>VaultX uses the camera only to scan two-factor authentication QR codes locally on your device.</string>
 			</dict>
 			<key>isa</key>
 			<string>XCBuildConfiguration</string>
@@ -587,6 +592,9 @@
 				<string>F0EDFB1DAD337BDBF8F66808</string>
 				<string>B39A44CA71FDE2005C02F6E9</string>
 				<string>3071875925120B29434BA088</string>
+				<string>C29DA3EE72A0CECDDBBFBB59</string>
+				<string>3BA447213174434D7962250B</string>
+				<string>EBCE26E7925B391466DC7CBB</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -922,6 +930,8 @@
 				<string>5.0</string>
 				<key>TARGETED_DEVICE_FAMILY</key>
 				<string>1</string>
+				<key>INFOPLIST_KEY_NSCameraUsageDescription</key>
+				<string>VaultX uses the camera only to scan two-factor authentication QR codes locally on your device.</string>
 			</dict>
 			<key>isa</key>
 			<string>XCBuildConfiguration</string>
@@ -1867,6 +1877,60 @@
 			<string>CD6E60B5B28C698C99168DD0</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
+		</dict>
+		<key>C29DA3EE72A0CECDDBBFBB59</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/TOTPQRCodeParser.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>70D4F7B1A91F3B7A64F66D80</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>C29DA3EE72A0CECDDBBFBB59</string>
+		</dict>
+		<key>3BA447213174434D7962250B</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Views/Home/QRCodeScannerView.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>02A69349A96191AA87399A53</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>3BA447213174434D7962250B</string>
+		</dict>
+		<key>EBCE26E7925B391466DC7CBB</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Views/Home/TOTPQRCodeReviewView.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>3A03153E0A26659C920EE029</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>EBCE26E7925B391466DC7CBB</string>
 		</dict>
 	</dict>
 	<key>rootObject</key>
