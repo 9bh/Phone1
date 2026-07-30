@@ -424,4 +424,32 @@ final class VaultAccountsStoreTests: XCTestCase {
         XCTAssertTrue(store.accounts.isEmpty)
         XCTAssertNotNil(store.storageAlert)
     }
+    func testDeleteRemainsVisibleUntilEncryptedSaveCompletes() async {
+        let account = makeAccount()
+        let started = TestAsyncLatch()
+        let release = TestAsyncLatch()
+        let persistence = TestVaultAccountsPersistence(accounts: [account])
+        await persistence.suspendNextSave(started: started, release: release)
+        let store = VaultAccountsStore(persistence: persistence)
+
+        await store.unlockAndLoad()
+
+        let deleteTask = Task {
+            await store.deleteAccount(id: account.id)
+        }
+
+        await started.wait()
+        XCTAssertEqual(store.accounts, [account])
+        XCTAssertTrue(store.isMutationInProgress)
+
+        await release.signal()
+        let result = await deleteTask.value
+
+        guard case .success = result else {
+            return XCTFail("Delete failed")
+        }
+        XCTAssertTrue(store.accounts.isEmpty)
+        XCTAssertFalse(store.isMutationInProgress)
+    }
+
 }

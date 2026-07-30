@@ -112,8 +112,71 @@ final class VaultAccountsStore: ObservableObject {
     }
 
     func deleteAccount(id: UUID) async -> Result<Void, VaultMutationError> {
-        await performMutation { current in
-            current.filter { $0.id != id }
+        guard loadState == .loaded else {
+            return .failure(.storeNotLoaded)
+        }
+        guard activeMutationID == nil else {
+            return .failure(.mutationInProgress)
+        }
+
+        let mutationID = UUID()
+        let session = currentSessionGeneration
+        let snapshot = accounts
+        let newAccounts = snapshot.filter { $0.id != id }
+
+        guard newAccounts.count != snapshot.count else {
+            return .success(())
+        }
+
+        activeMutationID = mutationID
+        isMutationInProgress = true
+
+        do {
+            // A deletion is published only after the encrypted file confirms the save.
+            // This prevents the UI from showing a deletion that was never committed.
+            try await persistence.saveAccounts(newAccounts)
+
+            guard session == currentSessionGeneration,
+                  loadState == .loaded else {
+                finishMutationIfCurrent(mutationID)
+                return .success(())
+            }
+
+            accounts = newAccounts
+            finishMutationIfCurrent(mutationID)
+            return .success(())
+        } catch let persistenceError as VaultPersistenceError
+            where persistenceError == .commitStateUnknown
+               || persistenceError == .atomicRecoveryFailed {
+
+            guard session == currentSessionGeneration,
+                  loadState == .loaded else {
+                finishMutationIfCurrent(mutationID)
+                return .failure(.commitStateUnknown)
+            }
+
+            accounts = []
+            loadState = .failed
+            storageAlert = VaultStorageAlert(
+                title: "تعذر الوصول إلى الخزنة",
+                message: "تعذر تأكيد حالة الحذف بأمان. لم يتم حذف بياناتك. أعد فتح الخزنة للمحاولة مرة أخرى."
+            )
+            finishMutationIfCurrent(mutationID)
+            return .failure(.commitStateUnknown)
+        } catch {
+            guard session == currentSessionGeneration,
+                  loadState == .loaded else {
+                finishMutationIfCurrent(mutationID)
+                return .failure(.saveFailed)
+            }
+
+            // The observable array was never changed, so the account stays visible.
+            storageAlert = VaultStorageAlert(
+                title: "تعذر حذف الحساب",
+                message: "تعذر حفظ الحذف بأمان. بقي الحساب محفوظًا. حاول مرة أخرى."
+            )
+            finishMutationIfCurrent(mutationID)
+            return .failure(.saveFailed)
         }
     }
 

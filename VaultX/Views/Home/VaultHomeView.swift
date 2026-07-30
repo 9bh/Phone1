@@ -5,6 +5,7 @@ struct VaultHomeView: View {
     @State private var showingAddAccount = false
     @State private var accountBeingEdited: VaultAccount?
     @State private var accountPendingDeletion: VaultAccount?
+    @State private var showingDeleteConfirmation = false
     
     var body: some View {
         NavigationStack {
@@ -70,13 +71,15 @@ struct VaultHomeView: View {
                             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
-                            .environment(\.layoutDirection, .leftToRight)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
+                                    guard !store.isMutationInProgress else { return }
                                     accountPendingDeletion = account
+                                    showingDeleteConfirmation = true
                                 } label: {
                                     Label("حذف", systemImage: "trash")
                                 }
+                                .disabled(store.isMutationInProgress)
                                 
                                 Button {
                                     accountBeingEdited = account
@@ -86,6 +89,7 @@ struct VaultHomeView: View {
                                 .tint(.blue)
                                 .disabled(store.isMutationInProgress)
                             }
+                            .environment(\.layoutDirection, .leftToRight)
                         }
                         
                         // Spacer for floating button
@@ -126,18 +130,26 @@ struct VaultHomeView: View {
         .sheet(item: $accountBeingEdited) { account in
             AddAccountView(accountToEdit: account)
         }
-        .alert(item: $accountPendingDeletion) { account in
-            Alert(
-                title: Text("حذف الحساب"),
-                message: Text("هل أنت متأكد من حذف هذا الحساب؟"),
-                primaryButton: .destructive(Text("حذف")) {
-                    guard !store.isMutationInProgress else { return }
-                    Task {
-                        _ = await store.deleteAccount(id: account.id)
-                    }
-                },
-                secondaryButton: .cancel(Text("إلغاء"))
-            )
+        .confirmationDialog(
+            "حذف الحساب",
+            isPresented: $showingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("حذف", role: .destructive) {
+                guard let account = accountPendingDeletion,
+                      !store.isMutationInProgress else { return }
+
+                Task {
+                    _ = await store.deleteAccount(id: account.id)
+                    accountPendingDeletion = nil
+                }
+            }
+
+            Button("إلغاء", role: .cancel) {
+                accountPendingDeletion = nil
+            }
+        } message: {
+            Text("هل أنت متأكد من حذف هذا الحساب؟")
         }
         .alert(item: $store.storageAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("حسناً")))
