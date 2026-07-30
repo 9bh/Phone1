@@ -130,26 +130,73 @@ struct VaultHomeView: View {
         .sheet(item: $accountBeingEdited) { account in
             AddAccountView(accountToEdit: account)
         }
-        .confirmationDialog(
-            "حذف الحساب",
-            isPresented: $showingDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("حذف", role: .destructive) {
-                guard let account = accountPendingDeletion,
-                      !store.isMutationInProgress else { return }
-
-                Task {
-                    _ = await store.deleteAccount(id: account.id)
-                    accountPendingDeletion = nil
+        .overlay {
+            if showingDeleteConfirmation, let _ = accountPendingDeletion {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                    
+                    VStack(alignment: .trailing, spacing: 20) {
+                        Text("حذف الحساب")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .multilineTextAlignment(.trailing)
+                        
+                        Text("هل أنت متأكد من حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .multilineTextAlignment(.trailing)
+                        
+                        HStack(spacing: 16) {
+                            Button {
+                                accountPendingDeletion = nil
+                                showingDeleteConfirmation = false
+                            } label: {
+                                Text("إلغاء")
+                                    .fontWeight(.medium)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                            }
+                            
+                            Button {
+                                guard let account = accountPendingDeletion,
+                                      !store.isMutationInProgress else { return }
+                                
+                                Task {
+                                    _ = await store.deleteAccount(id: account.id)
+                                    accountPendingDeletion = nil
+                                    showingDeleteConfirmation = false
+                                }
+                            } label: {
+                                Text("حذف")
+                                    .fontWeight(.bold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.red)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                            }
+                            .disabled(store.isMutationInProgress)
+                        }
+                        .environment(\.layoutDirection, .rightToLeft)
+                        .padding(.top, 8)
+                    }
+                    .padding(24)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
+                    .cornerRadius(16)
+                    .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+                    .padding(.horizontal, 32)
+                    .environment(\.layoutDirection, .rightToLeft)
                 }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .animation(.easeInOut(duration: 0.2), value: showingDeleteConfirmation)
             }
-
-            Button("إلغاء", role: .cancel) {
-                accountPendingDeletion = nil
-            }
-        } message: {
-            Text("هل أنت متأكد من حذف هذا الحساب؟")
         }
         .alert(item: $store.storageAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("حسناً")))
