@@ -15,6 +15,23 @@ struct AccountDetailView: View {
     
     @State private var isPasswordVisible = false
     @State private var copiedField: CopiedField? = nil
+    @State private var isTOTPSecretVisible = false
+    @ObservedObject private var clock = TOTPClock.shared
+    
+    private var currentTOTP: TOTPCode? {
+        guard account.has2FA,
+              let secretString = account.totpSecret,
+              let secretData = try? Base32Decoder.decode(secretString) else {
+            return nil
+        }
+        let config = TOTPConfiguration(
+            secret: secretData,
+            algorithm: account.totpAlgorithm,
+            digits: account.totpDigits,
+            period: account.totpPeriod
+        )
+        return try? TOTPEngine().generate(configuration: config, at: clock.currentTime)
+    }
     
     var body: some View {
         ScrollView {
@@ -50,42 +67,123 @@ struct AccountDetailView: View {
                                 
                                 Spacer()
                                 
-                                let codeString = account.displayCode.replacingOccurrences(of: " ", with: "")
-                                Text(codeString.map { String($0) }.joined(separator: " "))
-                                    .font(.system(size: 28, weight: .regular, design: .monospaced))
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.75)
-                                    .monospacedDigit()
-                                    .layoutPriority(1)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    copyToClipboard(account.displayCode, field: .twoFA)
-                                }) {
-                                    Image(systemName: copiedField == .twoFA ? "checkmark" : "doc.on.doc")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(copiedField == .twoFA ? .green : .primary)
-                                        .frame(width: 44, height: 44)
-                                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
-                                        .cornerRadius(10)
-                                }
-                                
-                                // Circular Timer Placeholder
-                                ZStack {
-                                    Circle()
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 3)
-                                        .frame(width: 24, height: 24)
+                                if let totp = currentTOTP {
+                                    let codeString = totp.value
+                                    let midIndex = codeString.index(codeString.startIndex, offsetBy: codeString.count / 2)
+                                    let firstHalf = String(codeString[..<midIndex])
+                                    let secondHalf = String(codeString[midIndex...])
                                     
-                                    Circle()
-                                        .trim(from: 0, to: 0.7)
-                                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                                        .frame(width: 24, height: 24)
-                                        .rotationEffect(.degrees(-90))
+                                    Text("\(firstHalf) \(secondHalf)")
+                                        .font(.system(size: 28, weight: .regular, design: .monospaced))
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.75)
+                                        .monospacedDigit()
+                                        .privacySensitive()
+                                        .layoutPriority(1)
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        copyToClipboard(totp.value, field: .twoFA)
+                                    }) {
+                                        Image(systemName: copiedField == .twoFA ? "checkmark" : "doc.on.doc")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(copiedField == .twoFA ? .green : .primary)
+                                            .frame(width: 44, height: 44)
+                                            .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                            .cornerRadius(10)
+                                    }
+                                    
+                                    ZStack {
+                                        Circle()
+                                            .stroke(Color.secondary.opacity(0.3), lineWidth: 3)
+                                            .frame(width: 28, height: 28)
+                                        
+                                        let progress = Double(totp.remainingSeconds) / Double(account.totpPeriod)
+                                        Circle()
+                                            .trim(from: 0, to: CGFloat(progress))
+                                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                            .frame(width: 28, height: 28)
+                                            .rotationEffect(.degrees(-90))
+                                            .animation(.linear(duration: 1.0), value: progress)
+                                        
+                                        Text("\(totp.remainingSeconds)")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.primary)
+                                    }
+                                } else {
+                                    Text("لا يوجد رمز تحقق صالح")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
                                 }
                             }
                             .environment(\.layoutDirection, .leftToRight)
+                            
+                            if currentTOTP != nil {
+                                Divider()
+                                VStack(spacing: 8) {
+                                    if let secret = account.totpSecret, !secret.isEmpty {
+                                        HStack(spacing: 12) {
+                                            Text("المفتاح السري")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+
+                                            Spacer()
+
+                                            Text(isTOTPSecretVisible ? secret : String(repeating: "•", count: min(max(secret.count, 8), 24)))
+                                                .font(.caption.monospaced())
+                                                .foregroundColor(.primary)
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.65)
+                                                .privacySensitive()
+
+                                            Button {
+                                                isTOTPSecretVisible.toggle()
+                                            } label: {
+                                                Image(systemName: isTOTPSecretVisible ? "eye.slash" : "eye")
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .accessibilityLabel(isTOTPSecretVisible ? "إخفاء المفتاح السري" : "إظهار المفتاح السري")
+                                        }
+                                    }
+                                    HStack {
+                                        Text("الخوارزمية")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text(account.totpAlgorithm.rawValue.uppercased())
+                                            .font(.caption)
+                                            .foregroundColor(.primary)
+                                    }
+                                    HStack {
+                                        Text("عدد الخانات")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("\(account.totpDigits)")
+                                            .font(.caption)
+                                            .foregroundColor(.primary)
+                                    }
+                                    HStack {
+                                        Text("الفترة")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("\(account.totpPeriod) ثانية")
+                                            .font(.caption)
+                                            .foregroundColor(.primary)
+                                    }
+                                    
+                                    Text("تأكد من ضبط وقت الجهاز تلقائيًا إذا كانت الرموز غير متطابقة.")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.trailing)
+                                        .padding(.top, 4)
+                                }
+                                .environment(\.layoutDirection, .rightToLeft)
+                            }
                         }
                         .padding()
                         .background(Color(uiColor: .secondarySystemGroupedBackground))

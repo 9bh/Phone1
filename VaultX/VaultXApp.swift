@@ -25,11 +25,27 @@ struct VaultXApp: App {
             AppRootView()
                 .environmentObject(appState)
                 .environmentObject(accountsStore)
+                .onAppear {
+                    updateTOTPClockState()
+                }
                 .onChange(of: scenePhase) { newPhase in
+                    updateTOTPClockState()
+
                     if newPhase == .background || newPhase == .inactive {
                         appState.appEnteredBackground()
                     }
                 }
+                .onChange(of: appState.currentState) { _ in
+                    updateTOTPClockState()
+                }
+        }
+    }
+
+    private func updateTOTPClockState() {
+        if scenePhase == .active, appState.currentState == .unlocked {
+            TOTPClock.shared.start()
+        } else {
+            TOTPClock.shared.stop()
         }
     }
 }

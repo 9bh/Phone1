@@ -10,6 +10,13 @@ struct VaultAccount: Identifiable, Codable, Hashable {
     var has2FA: Bool = false
     var hasBackupFile: Bool = false
     
+    // TOTP Fields
+    var totpSecret: String?
+    var totpIssuer: String?
+    var totpAlgorithm: TOTPAlgorithm = .sha1
+    var totpDigits: Int = 6
+    var totpPeriod: Int = 30
+    
     var serviceName: String {
         let source = !siteURL.isEmpty ? siteURL : email
         if source.isEmpty {
@@ -56,6 +63,42 @@ struct VaultAccount: Identifiable, Codable, Hashable {
     }
     
     var displayCode: String {
-        return "123 456"
+        return "123 456" // Fallback or placeholder if needed elsewhere
+    }
+    
+    // Custom decoding to support backward compatibility
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        siteURL = try container.decodeIfPresent(String.self, forKey: .siteURL) ?? ""
+        email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        password = try container.decodeIfPresent(String.self, forKey: .password) ?? ""
+        username = try container.decodeIfPresent(String.self, forKey: .username) ?? ""
+        notes = try container.decodeIfPresent(String.self, forKey: .notes) ?? ""
+        has2FA = try container.decodeIfPresent(Bool.self, forKey: .has2FA) ?? false
+        hasBackupFile = try container.decodeIfPresent(Bool.self, forKey: .hasBackupFile) ?? false
+        
+        totpSecret = try container.decodeIfPresent(String.self, forKey: .totpSecret)
+        totpIssuer = try container.decodeIfPresent(String.self, forKey: .totpIssuer)
+        totpAlgorithm = try container.decodeIfPresent(TOTPAlgorithm.self, forKey: .totpAlgorithm) ?? .sha1
+        totpDigits = try container.decodeIfPresent(Int.self, forKey: .totpDigits) ?? 6
+        totpPeriod = try container.decodeIfPresent(Int.self, forKey: .totpPeriod) ?? 30
+    }
+    
+    // Default initializer for new instances
+    init(id: UUID = UUID(), siteURL: String = "", email: String = "", password: String = "", username: String = "", notes: String = "", has2FA: Bool = false, hasBackupFile: Bool = false, totpSecret: String? = nil, totpIssuer: String? = nil, totpAlgorithm: TOTPAlgorithm = .sha1, totpDigits: Int = 6, totpPeriod: Int = 30) {
+        self.id = id
+        self.siteURL = siteURL
+        self.email = email
+        self.password = password
+        self.username = username
+        self.notes = notes
+        self.has2FA = has2FA
+        self.hasBackupFile = hasBackupFile
+        self.totpSecret = totpSecret
+        self.totpIssuer = totpIssuer
+        self.totpAlgorithm = totpAlgorithm
+        self.totpDigits = totpDigits
+        self.totpPeriod = totpPeriod
     }
 }

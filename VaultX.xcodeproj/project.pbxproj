@@ -86,6 +86,11 @@
 				<string>6FB34895C6B943F0BE647508</string>
 				<string>F50E697668844416ABACF36C</string>
 				<string>5B2B5FE483314538B7D94C92</string>
+				<string>54DBFBB54DC04534D8AC4A13</string>
+				<string>B19FAFC2EDE77945A24D3104</string>
+				<string>E58F78D703B1C774C8F52F37</string>
+				<string>AD56663EDAB73C1F7E3503FF</string>
+				<string>E8CD4E5C0C26BAAE4F2670CD</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -213,6 +218,7 @@
 				<string>27180A9DFA8345BC88692A43</string>
 				<string>D2E5DA60A38D4FE1B5A62934</string>
 				<string>890C8E8B4BBB4F4FAEFFC6ED</string>
+				<string>1E1ED486DC420C58E0B78FBE</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -373,6 +379,7 @@
 				<string>BD2266C8618D4A60B30EE9C8</string>
 				<string>C0D54C1D055842C1897DE647</string>
 				<string>884CAFE1019143D59F1C11B5</string>
+				<string>CD6E60B5B28C698C99168DD0</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -575,6 +582,11 @@
 				<string>6E57715FFA4044638330B4CD</string>
 				<string>3C086570B5D14724BFC0BBF2</string>
 				<string>943E0FDCB9BE4AC288421415</string>
+				<string>5B0CD9A68415D118FDE610E6</string>
+				<string>3B687288DA1A5D3E7083231E</string>
+				<string>F0EDFB1DAD337BDBF8F66808</string>
+				<string>B39A44CA71FDE2005C02F6E9</string>
+				<string>3071875925120B29434BA088</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -1745,6 +1757,114 @@
 		<dict>
 			<key>fileRef</key>
 			<string>884CAFE1019143D59F1C11B5</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>5B0CD9A68415D118FDE610E6</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Models/TOTPAlgorithm.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>54DBFBB54DC04534D8AC4A13</key>
+		<dict>
+			<key>fileRef</key>
+			<string>5B0CD9A68415D118FDE610E6</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>3B687288DA1A5D3E7083231E</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Models/TOTPConfiguration.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>B19FAFC2EDE77945A24D3104</key>
+		<dict>
+			<key>fileRef</key>
+			<string>3B687288DA1A5D3E7083231E</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>F0EDFB1DAD337BDBF8F66808</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/Base32Decoder.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>E58F78D703B1C774C8F52F37</key>
+		<dict>
+			<key>fileRef</key>
+			<string>F0EDFB1DAD337BDBF8F66808</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>B39A44CA71FDE2005C02F6E9</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/TOTPClock.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AD56663EDAB73C1F7E3503FF</key>
+		<dict>
+			<key>fileRef</key>
+			<string>B39A44CA71FDE2005C02F6E9</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>3071875925120B29434BA088</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/TOTPEngine.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>E8CD4E5C0C26BAAE4F2670CD</key>
+		<dict>
+			<key>fileRef</key>
+			<string>3071875925120B29434BA088</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>CD6E60B5B28C698C99168DD0</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>TOTPTests.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>1E1ED486DC420C58E0B78FBE</key>
+		<dict>
+			<key>fileRef</key>
+			<string>CD6E60B5B28C698C99168DD0</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>

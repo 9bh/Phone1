@@ -13,6 +13,14 @@ struct AddAccountView: View {
     @State private var has2FA = false
     @State private var hasBackupFile = false
     
+    @State private var totpSecret = ""
+    @State private var isTotpSecretVisible = false
+    @State private var totpIssuer = ""
+    @State private var totpAlgorithm: TOTPAlgorithm = .sha1
+    @State private var totpDigits: Int = 6
+    @State private var totpPeriod: Int = 30
+    @State private var totpError: String? = nil
+    
     var accountToEdit: VaultAccount?
     
     init(accountToEdit: VaultAccount? = nil) {
@@ -24,6 +32,11 @@ struct AddAccountView: View {
         _notes = State(initialValue: accountToEdit?.notes ?? "")
         _has2FA = State(initialValue: accountToEdit?.has2FA ?? false)
         _hasBackupFile = State(initialValue: accountToEdit?.hasBackupFile ?? false)
+        _totpSecret = State(initialValue: accountToEdit?.totpSecret ?? "")
+        _totpIssuer = State(initialValue: accountToEdit?.totpIssuer ?? "")
+        _totpAlgorithm = State(initialValue: accountToEdit?.totpAlgorithm ?? .sha1)
+        _totpDigits = State(initialValue: accountToEdit?.totpDigits ?? 6)
+        _totpPeriod = State(initialValue: accountToEdit?.totpPeriod ?? 30)
     }
     
     var body: some View {
@@ -50,6 +63,21 @@ struct AddAccountView: View {
                     
                     Button(action: {
                         guard !store.isMutationInProgress else { return }
+                        
+                        if has2FA {
+                            guard !totpSecret.isEmpty else {
+                                totpError = "يجب إدخال المفتاح السري"
+                                return
+                            }
+                            do {
+                                _ = try Base32Decoder.decode(totpSecret)
+                                totpError = nil
+                            } catch {
+                                totpError = "المفتاح السري غير صالح (يجب أن يكون Base32)"
+                                return
+                            }
+                        }
+                        
                         Task {
                             if let existing = accountToEdit {
                                 let updatedAccount = VaultAccount(
@@ -60,7 +88,12 @@ struct AddAccountView: View {
                                     username: username,
                                     notes: notes,
                                     has2FA: has2FA,
-                                    hasBackupFile: hasBackupFile
+                                    hasBackupFile: hasBackupFile,
+                                    totpSecret: has2FA ? totpSecret : nil,
+                                    totpIssuer: has2FA ? totpIssuer : nil,
+                                    totpAlgorithm: totpAlgorithm,
+                                    totpDigits: totpDigits,
+                                    totpPeriod: totpPeriod
                                 )
                                 let result = await store.updateAccount(updatedAccount)
                                 if case .success = result {
@@ -74,7 +107,12 @@ struct AddAccountView: View {
                                     username: username,
                                     notes: notes,
                                     has2FA: has2FA,
-                                    hasBackupFile: hasBackupFile
+                                    hasBackupFile: hasBackupFile,
+                                    totpSecret: has2FA ? totpSecret : nil,
+                                    totpIssuer: has2FA ? totpIssuer : nil,
+                                    totpAlgorithm: totpAlgorithm,
+                                    totpDigits: totpDigits,
+                                    totpPeriod: totpPeriod
                                 )
                                 let result = await store.addAccount(newAccount)
                                 if case .success = result {
@@ -129,21 +167,89 @@ struct AddAccountView: View {
                                 }
                                 .foregroundColor(.accentColor)
                             } else {
-                                VStack(spacing: 8) {
+                                VStack(spacing: 16) {
                                     HStack {
                                         Image(systemName: "checkmark.seal.fill")
                                             .foregroundColor(.green)
-                                        Text("تمت إضافة 2FA")
+                                        Text("تم تفعيل 2FA")
                                             .font(.headline)
                                             .foregroundColor(.primary)
                                         Spacer()
+                                        Button {
+                                            has2FA = false
+                                        } label: {
+                                            Image(systemName: "trash")
+                                                .foregroundColor(.red)
+                                        }
                                     }
                                     
+                                    if let error = totpError {
+                                        Text(error)
+                                            .font(.caption)
+                                            .foregroundColor(.red)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("المفتاح السري (Base32):")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        
+                                        HStack {
+                                            if isTotpSecretVisible {
+                                                TextField("Secret Key", text: $totpSecret)
+                                                    .autocapitalization(.none)
+                                                    .disableAutocorrection(true)
+                                            } else {
+                                                SecureField("Secret Key", text: $totpSecret)
+                                            }
+                                            
+                                            Button {
+                                                isTotpSecretVisible.toggle()
+                                            } label: {
+                                                Image(systemName: isTotpSecretVisible ? "eye.slash" : "eye")
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                        .padding(12)
+                                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                        .cornerRadius(10)
+                                    }
+                                    
+                                    inputField(label: "الجهة المصدرة (اختياري):", placeholder: "Issuer", text: $totpIssuer)
+                                    
                                     HStack {
-                                        Text("سيتم تفعيل مولد الرمز لهذا الحساب")
+                                        Text("الخوارزمية:")
                                             .font(.subheadline)
                                             .foregroundColor(.secondary)
                                         Spacer()
+                                        Picker("الخوارزمية", selection: $totpAlgorithm) {
+                                            Text("SHA1").tag(TOTPAlgorithm.sha1)
+                                            Text("SHA256").tag(TOTPAlgorithm.sha256)
+                                            Text("SHA512").tag(TOTPAlgorithm.sha512)
+                                        }
+                                    }
+                                    
+                                    HStack {
+                                        Text("الخانات:")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Picker("الخانات", selection: $totpDigits) {
+                                            Text("6").tag(6)
+                                            Text("8").tag(8)
+                                        }
+                                    }
+                                    
+                                    HStack {
+                                        Text("الفترة:")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Picker("الفترة", selection: $totpPeriod) {
+                                            Text("30").tag(30)
+                                            Text("60").tag(60)
+                                        }
                                     }
                                 }
                                 .padding()
