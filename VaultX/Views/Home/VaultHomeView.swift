@@ -1,16 +1,23 @@
 import SwiftUI
 
+@MainActor
+final class VaultNavigationSession: ObservableObject {
+  @Published var path: [UUID] = []
+  @Published var isMenuPresented = false
+  @Published var isShowingGoogleImport = false
+}
+
 struct VaultHomeView: View {
   @EnvironmentObject var store: VaultAccountsStore
   @EnvironmentObject private var appState: AppLockState
   @EnvironmentObject private var editorSession: AccountEditorSession
+  @EnvironmentObject private var navigationSession: VaultNavigationSession
+  @EnvironmentObject private var googleImportSession: GoogleAuthenticatorImportSession
   @State private var accountPendingDeletion: VaultAccount?
   @State private var showingDeleteConfirmation = false
-  @State private var isMenuPresented = false
-  @State private var isShowingGoogleImport = false
 
   var body: some View {
-    NavigationStack {
+    NavigationStack(path: $navigationSession.path) {
       ZStack {
         Color(uiColor: .systemBackground)
           .ignoresSafeArea()
@@ -66,9 +73,7 @@ struct VaultHomeView: View {
           } else {
             List {
               ForEach(store.accounts) { account in
-                NavigationLink {
-                  AccountDetailView(account: account)
-                } label: {
+                NavigationLink(value: account.id) {
                   AccountCardView(account: account)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
@@ -107,8 +112,8 @@ struct VaultHomeView: View {
           }
         }
         .environment(\.layoutDirection, .rightToLeft)
-        .allowsHitTesting(!isMenuPresented)
-        .accessibilityHidden(isMenuPresented)
+        .allowsHitTesting(!navigationSession.isMenuPresented)
+        .accessibilityHidden(navigationSession.isMenuPresented)
       }
       .overlay(alignment: .bottomTrailing) {
         Button {
@@ -125,18 +130,27 @@ struct VaultHomeView: View {
           }
         }
         .frame(width: 60, height: 60)
-        .disabled(store.isMutationInProgress || isMenuPresented)
+        .disabled(store.isMutationInProgress || navigationSession.isMenuPresented)
         .padding(.trailing, 24)
         .padding(.bottom, 24)
         .environment(\.layoutDirection, .leftToRight)
+      }
+      .navigationDestination(for: UUID.self) { accountID in
+        if let account = store.accounts.first(where: { $0.id == accountID }) {
+          AccountDetailView(account: account)
+        } else {
+          ProgressView("جاري تحميل الحساب...")
+            .environment(\.layoutDirection, .rightToLeft)
+        }
       }
     }
     .sheet(isPresented: editorPresentationBinding) {
       AddAccountView()
         .interactiveDismissDisabled(true)
     }
-    .sheet(isPresented: $isShowingGoogleImport) {
+    .sheet(isPresented: googleImportPresentationBinding) {
       GoogleAuthenticatorImportView()
+        .environmentObject(googleImportSession)
     }
     .overlay {
       if showingDeleteConfirmation, accountPendingDeletion != nil {
@@ -226,7 +240,7 @@ struct VaultHomeView: View {
       let menuWidth = min(proxy.size.width * 0.86, 360)
 
       ZStack(alignment: .leading) {
-        Color.black.opacity(isMenuPresented ? 0.48 : 0)
+        Color.black.opacity(navigationSession.isMenuPresented ? 0.48 : 0)
           .ignoresSafeArea()
           .contentShape(Rectangle())
           .onTapGesture {
@@ -248,8 +262,8 @@ struct VaultHomeView: View {
             topTrailingRadius: 24
           )
         )
-        .shadow(color: .black.opacity(isMenuPresented ? 0.3 : 0), radius: 24, x: 10, y: 0)
-        .offset(x: isMenuPresented ? 0 : -menuWidth)
+        .shadow(color: .black.opacity(navigationSession.isMenuPresented ? 0.3 : 0), radius: 24, x: 10, y: 0)
+        .offset(x: navigationSession.isMenuPresented ? 0 : -menuWidth)
         .gesture(
           DragGesture(minimumDistance: 20)
             .onEnded { value in
@@ -260,30 +274,43 @@ struct VaultHomeView: View {
         )
       }
       .environment(\.layoutDirection, .leftToRight)
-      .allowsHitTesting(isMenuPresented)
-      .accessibilityHidden(!isMenuPresented)
-      .animation(.easeInOut(duration: 0.24), value: isMenuPresented)
+      .allowsHitTesting(navigationSession.isMenuPresented)
+      .accessibilityHidden(!navigationSession.isMenuPresented)
+      .animation(.easeInOut(duration: 0.24), value: navigationSession.isMenuPresented)
     }
     .zIndex(100)
   }
 
   private func openMenu() {
     withAnimation(.easeOut(duration: 0.24)) {
-      isMenuPresented = true
+      navigationSession.isMenuPresented = true
     }
   }
 
   private func closeMenu() {
     withAnimation(.easeIn(duration: 0.2)) {
-      isMenuPresented = false
+      navigationSession.isMenuPresented = false
     }
   }
 
   private func openGoogleAuthenticatorImport() {
     closeMenu()
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-      isShowingGoogleImport = true
+      navigationSession.isShowingGoogleImport = true
     }
+  }
+
+  private var googleImportPresentationBinding: Binding<Bool> {
+    Binding(
+      get: { navigationSession.isShowingGoogleImport },
+      set: { isPresented in
+        if isPresented {
+          navigationSession.isShowingGoogleImport = true
+        } else if appState.currentState == .unlocked {
+          navigationSession.isShowingGoogleImport = false
+        }
+      }
+    )
   }
 
   private var editorPresentationBinding: Binding<Bool> {
@@ -306,6 +333,8 @@ struct VaultHomeView: View {
       .environmentObject(VaultAccountsStore.preview())
       .environmentObject(AppLockState.preview(state: .unlocked))
       .environmentObject(AccountEditorSession())
+      .environmentObject(VaultNavigationSession())
+      .environmentObject(GoogleAuthenticatorImportSession())
       .preferredColorScheme(.dark)
   }
 
@@ -314,6 +343,8 @@ struct VaultHomeView: View {
       .environmentObject(VaultAccountsStore.preview())
       .environmentObject(AppLockState.preview(state: .unlocked))
       .environmentObject(AccountEditorSession())
+      .environmentObject(VaultNavigationSession())
+      .environmentObject(GoogleAuthenticatorImportSession())
       .preferredColorScheme(.light)
   }
 
@@ -322,6 +353,8 @@ struct VaultHomeView: View {
       .environmentObject(VaultAccountsStore.preview())
       .environmentObject(AppLockState.preview(state: .unlocked))
       .environmentObject(AccountEditorSession())
+      .environmentObject(VaultNavigationSession())
+      .environmentObject(GoogleAuthenticatorImportSession())
       .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
   }
 
@@ -339,6 +372,8 @@ struct VaultHomeView: View {
       )
       .environmentObject(AppLockState.preview(state: .unlocked))
       .environmentObject(AccountEditorSession())
+      .environmentObject(VaultNavigationSession())
+      .environmentObject(GoogleAuthenticatorImportSession())
       .preferredColorScheme(.dark)
   }
 #endif

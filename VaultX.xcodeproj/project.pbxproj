@@ -165,6 +165,8 @@
 				<string>AccentColor</string>
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
+				<key>CURRENT_PROJECT_VERSION</key>
+				<string>2</string>
 				<key>ENABLE_PREVIEWS</key>
 				<string>YES</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -191,7 +193,7 @@
 					<string>@executable_path/Frameworks</string>
 				</array>
 				<key>MARKETING_VERSION</key>
-				<string>1.0</string>
+				<string>1.1.0</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.smartsphere.VaultX</string>
 				<key>PRODUCT_NAME</key>
@@ -761,6 +763,8 @@
 				<string>$(TEST_HOST)</string>
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
+				<key>CURRENT_PROJECT_VERSION</key>
+				<string>2</string>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>17.0</string>
 				<key>LD_RUNPATH_SEARCH_PATHS</key>
@@ -905,6 +909,8 @@
 				<string>AccentColor</string>
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
+				<key>CURRENT_PROJECT_VERSION</key>
+				<string>2</string>
 				<key>ENABLE_PREVIEWS</key>
 				<string>YES</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -931,7 +937,7 @@
 					<string>@executable_path/Frameworks</string>
 				</array>
 				<key>MARKETING_VERSION</key>
-				<string>1.0</string>
+				<string>1.1.0</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.smartsphere.VaultX</string>
 				<key>PRODUCT_NAME</key>
@@ -1178,6 +1184,8 @@
 				<string>$(TEST_HOST)</string>
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
+				<key>CURRENT_PROJECT_VERSION</key>
+				<string>2</string>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>17.0</string>
 				<key>LD_RUNPATH_SEARCH_PATHS</key>

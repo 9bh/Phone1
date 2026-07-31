@@ -1,11 +1,28 @@
 import PhotosUI
 import SwiftUI
 
-private enum GoogleAuthenticatorImportStage: Equatable {
+enum GoogleAuthenticatorImportStage: Equatable {
     case intro
     case collecting
     case review
     case completed
+}
+
+@MainActor
+final class GoogleAuthenticatorImportSession: ObservableObject {
+    @Published var stage: GoogleAuthenticatorImportStage = .intro
+    @Published var collector = GoogleAuthenticatorMigrationCollector()
+    @Published var rows: [GoogleAuthenticatorImportRow] = []
+    @Published var resolvingAccount: GoogleAuthenticatorImportedAccount?
+    @Published var importedCount = 0
+
+    func reset() {
+        stage = .intro
+        collector.reset()
+        rows = []
+        resolvingAccount = nil
+        importedCount = 0
+    }
 }
 
 private struct GoogleAuthenticatorImportMessage: Identifiable {
@@ -19,15 +36,11 @@ struct GoogleAuthenticatorImportView: View {
     @EnvironmentObject private var store: VaultAccountsStore
     @EnvironmentObject private var appState: AppLockState
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var importSession: GoogleAuthenticatorImportSession
 
-    @State private var stage: GoogleAuthenticatorImportStage = .intro
-    @State private var collector = GoogleAuthenticatorMigrationCollector()
-    @State private var rows: [GoogleAuthenticatorImportRow] = []
     @State private var isShowingScanner = false
     @State private var queuedRawCode: String?
-    @State private var resolvingAccount: GoogleAuthenticatorImportedAccount?
     @State private var message: GoogleAuthenticatorImportMessage?
-    @State private var importedCount = 0
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var isShowingPhotoPicker = false
     @State private var isAwaitingPhotoPickerReturn = false
@@ -36,7 +49,7 @@ struct GoogleAuthenticatorImportView: View {
     var body: some View {
         NavigationStack {
             Group {
-                switch stage {
+                switch importSession.stage {
                 case .intro:
                     introView
                 case .collecting:
@@ -51,7 +64,7 @@ struct GoogleAuthenticatorImportView: View {
             .navigationTitle("استيراد Google Authenticator")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if stage != .completed {
+                if importSession.stage != .completed {
                     ToolbarItem(placement: .topBarLeading) {
                         Button("إلغاء") {
                             clearSensitiveState()
@@ -62,7 +75,7 @@ struct GoogleAuthenticatorImportView: View {
             }
             .environment(\.layoutDirection, .rightToLeft)
         }
-        .interactiveDismissDisabled(stage == .collecting || store.isMutationInProgress)
+        .interactiveDismissDisabled(importSession.stage == .collecting || store.isMutationInProgress)
         .fullScreenCover(isPresented: $isShowingScanner, onDismiss: processQueuedCode) {
             RawQRCodeScannerScreen(
                 title: "استيراد من Google",
@@ -72,14 +85,14 @@ struct GoogleAuthenticatorImportView: View {
                 queuedRawCode = rawValue
             }
         }
-        .sheet(item: $resolvingAccount) { imported in
+        .sheet(item: $importSession.resolvingAccount) { imported in
             GoogleAuthenticatorResolutionView(
                 importedAccount: imported,
                 vaultAccounts: store.accounts,
                 currentDecision: row(for: imported.id)?.decision ?? .unresolved
             ) { decision in
                 setDecision(decision, for: imported.id)
-                resolvingAccount = nil
+                importSession.resolvingAccount = nil
             }
         }
         .alert(item: $message) { item in
@@ -114,12 +127,21 @@ struct GoogleAuthenticatorImportView: View {
             await processSelectedPhoto(selectedPhoto)
         }
         .onDisappear {
-            guard isShowingPhotoPicker || isAwaitingPhotoPickerReturn else { return }
-            isShowingPhotoPicker = false
-            isAwaitingPhotoPickerReturn = false
-            appState.endTrustedSystemPresentation(
-                lockIfStillBackgrounded: scenePhase == .background
-            )
+            let hadTrustedPresentation = isShowingPhotoPicker || isAwaitingPhotoPickerReturn
+
+            if hadTrustedPresentation {
+                isShowingPhotoPicker = false
+                isAwaitingPhotoPickerReturn = false
+                appState.endTrustedSystemPresentation(
+                    lockIfStillBackgrounded: scenePhase == .background
+                )
+            }
+
+            // A lock caused by leaving the app must preserve the in-memory import session.
+            // An intentional dismissal while unlocked clears all temporary import data.
+            if appState.currentState == .unlocked && !hadTrustedPresentation {
+                importSession.reset()
+            }
         }
     }
 
@@ -210,19 +232,19 @@ struct GoogleAuthenticatorImportView: View {
                     .frame(width: 132, height: 132)
 
                 VStack(spacing: 4) {
-                    Text("\(collector.scannedPartCount)")
+                    Text("\(importSession.collector.scannedPartCount)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                    Text("من \(max(collector.expectedPartCount, 1))")
+                    Text("من \(max(importSession.collector.expectedPartCount, 1))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
 
             VStack(spacing: 8) {
-                Text(collector.scannedPartCount == 0 ? "بانتظار أول رمز" : "تم حفظ الجزء داخل الذاكرة مؤقتًا")
+                Text(importSession.collector.scannedPartCount == 0 ? "بانتظار أول رمز" : "تم حفظ الجزء داخل الذاكرة مؤقتًا")
                     .font(.headline)
 
-                Text("الحسابات المقروءة حتى الآن: \(collector.accounts.count)")
+                Text("الحسابات المقروءة حتى الآن: \(importSession.collector.accounts.count)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -232,7 +254,7 @@ struct GoogleAuthenticatorImportView: View {
                     isShowingScanner = true
                 } label: {
                     Label(
-                        collector.scannedPartCount == 0 ? "فتح الكاميرا" : "مسح الرمز التالي",
+                        importSession.collector.scannedPartCount == 0 ? "فتح الكاميرا" : "مسح الرمز التالي",
                         systemImage: "qrcode.viewfinder"
                     )
                     .font(.headline)
@@ -261,8 +283,8 @@ struct GoogleAuthenticatorImportView: View {
             .padding(.horizontal)
 
             Button("إعادة البدء") {
-                collector.reset()
-                rows = []
+                importSession.collector.reset()
+                importSession.rows = []
                 queuedRawCode = nil
             }
             .foregroundColor(.red)
@@ -278,14 +300,14 @@ struct GoogleAuthenticatorImportView: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("مراجعة وربط الحسابات")
                         .font(.headline)
-                    Text("اضغط على أي حساب لتغيير طريقة استيراده.")
+                    Text("حدّد الحساب من الدائرة، واضغط البطاقة فقط عند الحاجة لتغيير طريقة الربط.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
-                Text("\(rows.count)")
+                Text("\(importSession.rows.count)")
                     .font(.title2.bold())
                     .foregroundColor(.accentColor)
             }
@@ -294,13 +316,32 @@ struct GoogleAuthenticatorImportView: View {
 
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(rows) { row in
-                        Button {
-                            resolvingAccount = row.account
-                        } label: {
-                            importRowView(row)
+                    ForEach(importSession.rows) { row in
+                        ZStack {
+                            Button {
+                                importSession.resolvingAccount = row.account
+                            } label: {
+                                importRowView(row)
+                            }
+                            .buttonStyle(.plain)
+
+                            VStack {
+                                HStack {
+                                    Spacer()
+
+                                    AnimatedImportSelectionButton(
+                                        isSelected: isSelected(row.decision)
+                                    ) {
+                                        toggleSelection(for: row)
+                                    }
+                                }
+
+                                Spacer()
+                            }
+                            .padding(.top, 12)
+                            .padding(.horizontal, 12)
+                            .environment(\.layoutDirection, .leftToRight)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding()
@@ -347,7 +388,7 @@ struct GoogleAuthenticatorImportView: View {
             Text("اكتمل الاستيراد")
                 .font(.title2.bold())
 
-            Text("تم حفظ \(importedCount) حساب أو تحديثه داخل الخزنة المشفرة.")
+            Text("تم حفظ \(importSession.importedCount) حساب أو تحديثه داخل الخزنة المشفرة.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -406,6 +447,7 @@ struct GoogleAuthenticatorImportView: View {
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
+            .padding(.leading, 40)
 
             Image(systemName: "chevron.left")
                 .font(.caption.bold())
@@ -421,17 +463,17 @@ struct GoogleAuthenticatorImportView: View {
     }
 
     private var scannerProgressText: String? {
-        guard collector.scannedPartCount > 0 else { return nil }
-        return "تم مسح \(collector.scannedPartCount) من \(collector.expectedPartCount)"
+        guard importSession.collector.scannedPartCount > 0 else { return nil }
+        return "تم مسح \(importSession.collector.scannedPartCount) من \(importSession.collector.expectedPartCount)"
     }
 
     private var collectionProgress: Double {
-        guard collector.expectedPartCount > 0 else { return 0 }
-        return min(1, Double(collector.scannedPartCount) / Double(collector.expectedPartCount))
+        guard importSession.collector.expectedPartCount > 0 else { return 0 }
+        return min(1, Double(importSession.collector.scannedPartCount) / Double(importSession.collector.expectedPartCount))
     }
 
     private var unresolvedCount: Int {
-        rows.filter { $0.decision == .unresolved }.count
+        importSession.rows.filter { $0.decision == .unresolved }.count
     }
 
     private func processQueuedCode() {
@@ -443,13 +485,13 @@ struct GoogleAuthenticatorImportView: View {
     private func processRawValue(_ rawValue: String) {
         do {
             let batch = try GoogleAuthenticatorMigrationParser.parse(rawValue)
-            try collector.add(batch)
+            try importSession.collector.add(batch)
 
-            if collector.isComplete {
+            if importSession.collector.isComplete {
                 prepareRows()
-                stage = .review
+                importSession.stage = .review
             } else {
-                stage = .collecting
+                importSession.stage = .collecting
             }
         } catch let error as GoogleAuthenticatorMigrationError {
             message = GoogleAuthenticatorImportMessage(
@@ -465,10 +507,10 @@ struct GoogleAuthenticatorImportView: View {
     }
 
     private func beginFreshImport() {
-        collector.reset()
-        rows = []
+        importSession.collector.reset()
+        importSession.rows = []
         queuedRawCode = nil
-        stage = .collecting
+        importSession.stage = .collecting
     }
 
     private func finishTrustedPhotoPickerPresentation() {
@@ -488,7 +530,7 @@ struct GoogleAuthenticatorImportView: View {
     }
 
     private func processSelectedPhoto(_ item: PhotosPickerItem) async {
-        if stage == .intro {
+        if importSession.stage == .intro {
             beginFreshImport()
         }
 
@@ -529,7 +571,7 @@ struct GoogleAuthenticatorImportView: View {
     }
 
     private func prepareRows() {
-        rows = collector.accounts.map { imported in
+        importSession.rows = importSession.collector.accounts.map { imported in
             let suggestion = GoogleAuthenticatorAccountMatcher.suggestion(
                 for: imported,
                 among: store.accounts
@@ -545,10 +587,12 @@ struct GoogleAuthenticatorImportView: View {
                    account.totpSecret?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
                     decision = .link(accountID)
                 } else {
-                    decision = .unresolved
+                    // A conflicting existing TOTP is never replaced automatically.
+                    decision = .skip
                 }
             case .possible:
-                decision = .unresolved
+                // Creating a separate account is safer than silently linking a weak match.
+                decision = .createNew
             case .none:
                 decision = .createNew
             }
@@ -563,12 +607,48 @@ struct GoogleAuthenticatorImportView: View {
     }
 
     private func row(for id: UUID) -> GoogleAuthenticatorImportRow? {
-        rows.first(where: { $0.id == id })
+        importSession.rows.first(where: { $0.id == id })
     }
 
     private func setDecision(_ decision: GoogleAuthenticatorImportDecision, for id: UUID) {
-        guard let index = rows.firstIndex(where: { $0.id == id }) else { return }
-        rows[index].decision = decision
+        guard let index = importSession.rows.firstIndex(where: { $0.id == id }) else { return }
+        importSession.rows[index].decision = decision
+    }
+
+    private func isSelected(_ decision: GoogleAuthenticatorImportDecision) -> Bool {
+        switch decision {
+        case .createNew, .link, .replace:
+            return true
+        case .skip, .unresolved:
+            return false
+        }
+    }
+
+    private func toggleSelection(for row: GoogleAuthenticatorImportRow) {
+        let nextDecision: GoogleAuthenticatorImportDecision
+        if isSelected(row.decision) {
+            nextDecision = .skip
+        } else {
+            nextDecision = preferredDecision(for: row)
+        }
+
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+            setDecision(nextDecision, for: row.id)
+        }
+    }
+
+    private func preferredDecision(for row: GoogleAuthenticatorImportRow) -> GoogleAuthenticatorImportDecision {
+        if let suggestedID = row.suggestedAccountID,
+           let existing = store.accounts.first(where: { $0.id == suggestedID }) {
+            let existingSecret = existing.totpSecret?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+            if existingSecret.isEmpty {
+                return .link(suggestedID)
+            }
+        }
+
+        return .createNew
     }
 
     private func decisionTitle(_ row: GoogleAuthenticatorImportRow) -> String {
@@ -617,7 +697,7 @@ struct GoogleAuthenticatorImportView: View {
         guard unresolvedCount == 0, !store.isMutationInProgress else { return }
 
         var linkedAccountIDs = Set<UUID>()
-        for row in rows {
+        for row in importSession.rows {
             let targetID: UUID?
             switch row.decision {
             case .link(let id), .replace(let id):
@@ -649,7 +729,7 @@ struct GoogleAuthenticatorImportView: View {
         var additions: [VaultAccount] = []
         var effectiveCount = 0
 
-        for row in rows {
+        for row in importSession.rows {
             switch row.decision {
             case .unresolved:
                 return
@@ -667,9 +747,9 @@ struct GoogleAuthenticatorImportView: View {
         }
 
         if updatesByID.isEmpty && additions.isEmpty {
-            importedCount = 0
+            importSession.importedCount = 0
             clearPayloadOnly()
-            stage = .completed
+            importSession.stage = .completed
             return
         }
 
@@ -681,9 +761,9 @@ struct GoogleAuthenticatorImportView: View {
 
             switch result {
             case .success:
-                importedCount = effectiveCount
+                importSession.importedCount = effectiveCount
                 clearPayloadOnly()
-                stage = .completed
+                importSession.stage = .completed
             case .failure:
                 message = GoogleAuthenticatorImportMessage(
                     title: "تعذر حفظ الاستيراد",
@@ -721,17 +801,70 @@ struct GoogleAuthenticatorImportView: View {
     }
 
     private func clearPayloadOnly() {
-        collector.reset()
-        rows = []
+        importSession.collector.reset()
+        importSession.rows = []
         queuedRawCode = nil
-        resolvingAccount = nil
+        importSession.resolvingAccount = nil
         selectedPhoto = nil
         isProcessingPhoto = false
     }
 
     private func clearSensitiveState() {
-        clearPayloadOnly()
-        importedCount = 0
+        queuedRawCode = nil
+        selectedPhoto = nil
+        isProcessingPhoto = false
+        importSession.reset()
+    }
+}
+
+private struct AnimatedImportSelectionButton: View {
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                ZStack {
+                    Circle()
+                        .stroke(
+                            isSelected ? Color.accentColor : Color.secondary.opacity(0.55),
+                            lineWidth: 2
+                        )
+
+                    Circle()
+                        .fill(Color.accentColor)
+                        .scaleEffect(isSelected ? 1 : 0.25)
+                        .opacity(isSelected ? 1 : 0)
+
+                    AnimatedCheckmarkShape()
+                        .trim(from: 0, to: isSelected ? 1 : 0)
+                        .stroke(
+                            Color.white,
+                            style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round)
+                        )
+                        .padding(7)
+                        .rotationEffect(.degrees(isSelected ? 0 : -18))
+                }
+                .frame(width: 30, height: 30)
+            }
+            .frame(width: 44, height: 44)
+            .contentShape(Circle())
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+            .animation(.easeOut(duration: 0.2), value: isSelected)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isSelected ? "إلغاء تحديد الحساب" : "تحديد الحساب للاستيراد")
+        .accessibilityValue(isSelected ? "محدد" : "غير محدد")
+    }
+}
+
+private struct AnimatedCheckmarkShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX + rect.width * 0.14, y: rect.minY + rect.height * 0.52))
+        path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.42, y: rect.minY + rect.height * 0.78))
+        path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.86, y: rect.minY + rect.height * 0.22))
+        return path
     }
 }
 

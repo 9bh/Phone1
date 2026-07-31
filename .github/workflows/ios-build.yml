@@ -50,6 +50,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/VaultXDerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             clean build
 
   build-unsigned-ipa:
@@ -59,7 +60,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -78,6 +79,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             clean build
 
       - name: Locate application bundle
@@ -146,7 +148,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -203,6 +205,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/VaultXTestDerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             clean test
 
       - name: Shutdown Simulator

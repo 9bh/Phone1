@@ -35,24 +35,16 @@ struct VaultMainMenuView: View {
             Button(action: onGoogleAuthenticatorImport) {
                 HStack(spacing: 14) {
                     Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 21, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.accentColor)
-                        .frame(width: 42, height: 42)
+                        .frame(width: 38, height: 38)
                         .background(Color.accentColor.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 11))
 
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("استيراد من Google Authenticator")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-
-                        Text("نقل الحسابات وربطها بحسابات VaultX الحالية")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.trailing)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
+                    Text("استيراد من Google Authenticator")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
 
                     Image(systemName: "chevron.left")
                         .font(.caption.weight(.bold))
@@ -65,23 +57,21 @@ struct VaultMainMenuView: View {
             .buttonStyle(.plain)
             .environment(\.layoutDirection, .leftToRight)
 
-            Divider()
-                .padding(.horizontal, 20)
-
-            VStack(alignment: .trailing, spacing: 11) {
-                Label("يعمل دون إنترنت", systemImage: "wifi.slash")
-                Label("لا تُحفظ صور QR", systemImage: "photo.badge.checkmark")
-                Label("تتم المطابقة داخل الجهاز", systemImage: "lock.shield")
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(20)
-            .environment(\.layoutDirection, .rightToLeft)
-
             Spacer(minLength: 0)
+
+            Text(versionText)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 18)
         }
         .background(Color(uiColor: .secondarySystemBackground))
+    }
+
+    private var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "الإصدار \(version) (\(build))"
     }
 }
 

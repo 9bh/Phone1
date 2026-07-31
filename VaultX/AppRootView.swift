@@ -4,6 +4,8 @@ struct AppRootView: View {
   @EnvironmentObject var appState: AppLockState
   @EnvironmentObject var accountsStore: VaultAccountsStore
   @StateObject private var editorSession = AccountEditorSession()
+  @StateObject private var navigationSession = VaultNavigationSession()
+  @StateObject private var googleImportSession = GoogleAuthenticatorImportSession()
 
   var body: some View {
     Group {
@@ -40,6 +42,8 @@ struct AppRootView: View {
     case .loaded:
       VaultHomeView()
         .environmentObject(editorSession)
+        .environmentObject(navigationSession)
+        .environmentObject(googleImportSession)
     case .failed:
       VStack(spacing: 16) {
         Text("تعذر الوصول إلى الخزنة")
