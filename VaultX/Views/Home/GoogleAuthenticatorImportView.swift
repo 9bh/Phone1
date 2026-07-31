@@ -17,6 +17,8 @@ private struct GoogleAuthenticatorImportMessage: Identifiable {
 struct GoogleAuthenticatorImportView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: VaultAccountsStore
+    @EnvironmentObject private var appState: AppLockState
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var stage: GoogleAuthenticatorImportStage = .intro
     @State private var collector = GoogleAuthenticatorMigrationCollector()
@@ -27,6 +29,8 @@ struct GoogleAuthenticatorImportView: View {
     @State private var message: GoogleAuthenticatorImportMessage?
     @State private var importedCount = 0
     @State private var selectedPhoto: PhotosPickerItem?
+    @State private var isShowingPhotoPicker = false
+    @State private var isAwaitingPhotoPickerReturn = false
     @State private var isProcessingPhoto = false
 
     var body: some View {
@@ -85,9 +89,37 @@ struct GoogleAuthenticatorImportView: View {
                 dismissButton: .default(Text("حسنًا"))
             )
         }
+        .photosPicker(
+            isPresented: $isShowingPhotoPicker,
+            selection: $selectedPhoto,
+            matching: .images
+        )
+        .onChange(of: isShowingPhotoPicker) { isPresented in
+            guard !isPresented else { return }
+            finishTrustedPhotoPickerPresentation()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            guard isAwaitingPhotoPickerReturn else { return }
+
+            if newPhase == .active {
+                isAwaitingPhotoPickerReturn = false
+                appState.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
+            } else if newPhase == .background {
+                isAwaitingPhotoPickerReturn = false
+                appState.endTrustedSystemPresentation(lockIfStillBackgrounded: true)
+            }
+        }
         .task(id: selectedPhoto) {
             guard let selectedPhoto else { return }
             await processSelectedPhoto(selectedPhoto)
+        }
+        .onDisappear {
+            guard isShowingPhotoPicker || isAwaitingPhotoPickerReturn else { return }
+            isShowingPhotoPicker = false
+            isAwaitingPhotoPickerReturn = false
+            appState.endTrustedSystemPresentation(
+                lockIfStillBackgrounded: scenePhase == .background
+            )
         }
     }
 
@@ -141,14 +173,16 @@ struct GoogleAuthenticatorImportView: View {
                     }
                     .buttonStyle(.borderedProminent)
 
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                    Button {
+                        presentPhotoPicker()
+                    } label: {
                         Label("اختيار لقطة شاشة من هذا الآيفون", systemImage: "photo.on.rectangle")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                     }
                     .buttonStyle(.bordered)
-                    .disabled(isProcessingPhoto)
+                    .disabled(isProcessingPhoto || isShowingPhotoPicker)
 
                     Text("عند النقل على الجهاز نفسه، التقط صورة لرمز التصدير ثم اخترها هنا. احذف اللقطة من الصور بعد اكتمال الاستيراد لأنها تحتوي على مفاتيح المصادقة.")
                         .font(.caption)
@@ -207,7 +241,9 @@ struct GoogleAuthenticatorImportView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                Button {
+                    presentPhotoPicker()
+                } label: {
                     if isProcessingPhoto {
                         ProgressView()
                             .frame(maxWidth: .infinity)
@@ -220,7 +256,7 @@ struct GoogleAuthenticatorImportView: View {
                     }
                 }
                 .buttonStyle(.bordered)
-                .disabled(isProcessingPhoto)
+                .disabled(isProcessingPhoto || isShowingPhotoPicker)
             }
             .padding(.horizontal)
 
@@ -433,6 +469,22 @@ struct GoogleAuthenticatorImportView: View {
         rows = []
         queuedRawCode = nil
         stage = .collecting
+    }
+
+    private func finishTrustedPhotoPickerPresentation() {
+        if scenePhase == .active {
+            appState.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
+        } else if scenePhase == .background {
+            appState.endTrustedSystemPresentation(lockIfStillBackgrounded: true)
+        } else {
+            isAwaitingPhotoPickerReturn = true
+        }
+    }
+
+    private func presentPhotoPicker() {
+        guard !isShowingPhotoPicker else { return }
+        appState.beginTrustedSystemPresentation()
+        isShowingPhotoPicker = true
     }
 
     private func processSelectedPhoto(_ item: PhotosPickerItem) async {

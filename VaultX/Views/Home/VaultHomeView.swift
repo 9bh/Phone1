@@ -1,33 +1,24 @@
 import SwiftUI
 
-private enum VaultHomeSheet: String, Identifiable {
-  case menu
-  case googleAuthenticatorImport
-
-  var id: String { rawValue }
-}
-
 struct VaultHomeView: View {
   @EnvironmentObject var store: VaultAccountsStore
   @EnvironmentObject private var appState: AppLockState
   @EnvironmentObject private var editorSession: AccountEditorSession
   @State private var accountPendingDeletion: VaultAccount?
   @State private var showingDeleteConfirmation = false
-  @State private var activeHomeSheet: VaultHomeSheet?
-  @State private var presentsGoogleImportAfterMenu = false
+  @State private var isMenuPresented = false
+  @State private var isShowingGoogleImport = false
 
   var body: some View {
     NavigationStack {
       ZStack {
-        // Background
         Color(uiColor: .systemBackground)
           .ignoresSafeArea()
 
         VStack(spacing: 0) {
-          // Fake Search Bar
           HStack(spacing: 12) {
             Button {
-              activeHomeSheet = .menu
+              openMenu()
             } label: {
               Image(systemName: "line.3.horizontal")
                 .foregroundColor(.primary)
@@ -52,13 +43,13 @@ struct VaultHomeView: View {
           .padding(.horizontal, 16)
           .padding(.vertical, 12)
           .background(Color(uiColor: .secondarySystemBackground))
-          .cornerRadius(12)  // Rounded rectangular background
+          .cornerRadius(12)
           .padding(.horizontal, 16)
           .padding(.top, 16)
 
           if store.accounts.isEmpty {
             Spacer()
-            // Empty State
+
             VStack(spacing: 12) {
               Text("لا توجد حسابات مضافة حتى الآن")
                 .font(.headline)
@@ -108,7 +99,6 @@ struct VaultHomeView: View {
                 .environment(\.layoutDirection, .leftToRight)
               }
 
-              // Spacer for floating button
               Color.clear.frame(height: 80)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -116,8 +106,9 @@ struct VaultHomeView: View {
             .listStyle(.plain)
           }
         }
-        .environment(\.layoutDirection, .rightToLeft)  // Ensure RTL layout for Arabic text
-
+        .environment(\.layoutDirection, .rightToLeft)
+        .allowsHitTesting(!isMenuPresented)
+        .accessibilityHidden(isMenuPresented)
       }
       .overlay(alignment: .bottomTrailing) {
         Button {
@@ -134,7 +125,7 @@ struct VaultHomeView: View {
           }
         }
         .frame(width: 60, height: 60)
-        .disabled(store.isMutationInProgress)
+        .disabled(store.isMutationInProgress || isMenuPresented)
         .padding(.trailing, 24)
         .padding(.bottom, 24)
         .environment(\.layoutDirection, .leftToRight)
@@ -144,86 +135,16 @@ struct VaultHomeView: View {
       AddAccountView()
         .interactiveDismissDisabled(true)
     }
-    .sheet(item: $activeHomeSheet, onDismiss: presentPendingHomeSheet) { sheet in
-      switch sheet {
-      case .menu:
-        VaultMainMenuView {
-          presentsGoogleImportAfterMenu = true
-          activeHomeSheet = nil
-        }
-        .presentationDetents([.medium])
-      case .googleAuthenticatorImport:
-        GoogleAuthenticatorImportView()
-      }
+    .sheet(isPresented: $isShowingGoogleImport) {
+      GoogleAuthenticatorImportView()
     }
     .overlay {
       if showingDeleteConfirmation, accountPendingDeletion != nil {
-        ZStack {
-          Color.black.opacity(0.4)
-            .ignoresSafeArea()
-
-          VStack(alignment: .trailing, spacing: 20) {
-            Text("حذف الحساب")
-              .font(.title3)
-              .fontWeight(.bold)
-              .foregroundColor(.primary)
-              .frame(maxWidth: .infinity, alignment: .trailing)
-              .multilineTextAlignment(.trailing)
-
-            Text("هل أنت متأكد من حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء.")
-              .font(.body)
-              .foregroundColor(.secondary)
-              .frame(maxWidth: .infinity, alignment: .trailing)
-              .multilineTextAlignment(.trailing)
-
-            HStack(spacing: 16) {
-              Button {
-                accountPendingDeletion = nil
-                showingDeleteConfirmation = false
-              } label: {
-                Text("إلغاء")
-                  .fontWeight(.medium)
-                  .frame(maxWidth: .infinity)
-                  .padding(.vertical, 12)
-                  .background(Color(uiColor: .tertiarySystemGroupedBackground))
-                  .foregroundColor(.primary)
-                  .cornerRadius(10)
-              }
-
-              Button {
-                guard let account = accountPendingDeletion,
-                  !store.isMutationInProgress
-                else { return }
-
-                Task {
-                  _ = await store.deleteAccount(id: account.id)
-                  accountPendingDeletion = nil
-                  showingDeleteConfirmation = false
-                }
-              } label: {
-                Text("حذف")
-                  .fontWeight(.bold)
-                  .frame(maxWidth: .infinity)
-                  .padding(.vertical, 12)
-                  .background(Color.red)
-                  .foregroundColor(.white)
-                  .cornerRadius(10)
-              }
-              .disabled(store.isMutationInProgress)
-            }
-            .environment(\.layoutDirection, .rightToLeft)
-            .padding(.top, 8)
-          }
-          .padding(24)
-          .background(Color(uiColor: .secondarySystemGroupedBackground))
-          .cornerRadius(16)
-          .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
-          .padding(.horizontal, 32)
-          .environment(\.layoutDirection, .rightToLeft)
-        }
-        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-        .animation(.easeInOut(duration: 0.2), value: showingDeleteConfirmation)
+        deleteConfirmationOverlay
       }
+    }
+    .overlay {
+      sideMenuOverlay
     }
     .alert(item: $store.storageAlert) { alert in
       Alert(
@@ -232,10 +153,137 @@ struct VaultHomeView: View {
     }
   }
 
-  private func presentPendingHomeSheet() {
-    guard presentsGoogleImportAfterMenu else { return }
-    presentsGoogleImportAfterMenu = false
-    activeHomeSheet = .googleAuthenticatorImport
+  private var deleteConfirmationOverlay: some View {
+    ZStack {
+      Color.black.opacity(0.4)
+        .ignoresSafeArea()
+
+      VStack(alignment: .trailing, spacing: 20) {
+        Text("حذف الحساب")
+          .font(.title3)
+          .fontWeight(.bold)
+          .foregroundColor(.primary)
+          .frame(maxWidth: .infinity, alignment: .trailing)
+          .multilineTextAlignment(.trailing)
+
+        Text("هل أنت متأكد من حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء.")
+          .font(.body)
+          .foregroundColor(.secondary)
+          .frame(maxWidth: .infinity, alignment: .trailing)
+          .multilineTextAlignment(.trailing)
+
+        HStack(spacing: 16) {
+          Button {
+            accountPendingDeletion = nil
+            showingDeleteConfirmation = false
+          } label: {
+            Text("إلغاء")
+              .fontWeight(.medium)
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 12)
+              .background(Color(uiColor: .tertiarySystemGroupedBackground))
+              .foregroundColor(.primary)
+              .cornerRadius(10)
+          }
+
+          Button {
+            guard let account = accountPendingDeletion,
+              !store.isMutationInProgress
+            else { return }
+
+            Task {
+              _ = await store.deleteAccount(id: account.id)
+              accountPendingDeletion = nil
+              showingDeleteConfirmation = false
+            }
+          } label: {
+            Text("حذف")
+              .fontWeight(.bold)
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 12)
+              .background(Color.red)
+              .foregroundColor(.white)
+              .cornerRadius(10)
+          }
+          .disabled(store.isMutationInProgress)
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+        .padding(.top, 8)
+      }
+      .padding(24)
+      .background(Color(uiColor: .secondarySystemGroupedBackground))
+      .cornerRadius(16)
+      .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+      .padding(.horizontal, 32)
+      .environment(\.layoutDirection, .rightToLeft)
+    }
+    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+    .animation(.easeInOut(duration: 0.2), value: showingDeleteConfirmation)
+  }
+
+  private var sideMenuOverlay: some View {
+    GeometryReader { proxy in
+      let menuWidth = min(proxy.size.width * 0.86, 360)
+
+      ZStack(alignment: .leading) {
+        Color.black.opacity(isMenuPresented ? 0.48 : 0)
+          .ignoresSafeArea()
+          .contentShape(Rectangle())
+          .onTapGesture {
+            closeMenu()
+          }
+
+        VaultMainMenuView(
+          onClose: closeMenu,
+          onGoogleAuthenticatorImport: openGoogleAuthenticatorImport
+        )
+        .frame(width: menuWidth)
+        .frame(maxHeight: .infinity)
+        .background(Color(uiColor: .secondarySystemBackground))
+        .clipShape(
+          UnevenRoundedRectangle(
+            topLeadingRadius: 0,
+            bottomLeadingRadius: 0,
+            bottomTrailingRadius: 24,
+            topTrailingRadius: 24
+          )
+        )
+        .shadow(color: .black.opacity(isMenuPresented ? 0.3 : 0), radius: 24, x: 10, y: 0)
+        .offset(x: isMenuPresented ? 0 : -menuWidth)
+        .gesture(
+          DragGesture(minimumDistance: 20)
+            .onEnded { value in
+              if value.translation.width < -70 {
+                closeMenu()
+              }
+            }
+        )
+      }
+      .environment(\.layoutDirection, .leftToRight)
+      .allowsHitTesting(isMenuPresented)
+      .accessibilityHidden(!isMenuPresented)
+      .animation(.easeInOut(duration: 0.24), value: isMenuPresented)
+    }
+    .zIndex(100)
+  }
+
+  private func openMenu() {
+    withAnimation(.easeOut(duration: 0.24)) {
+      isMenuPresented = true
+    }
+  }
+
+  private func closeMenu() {
+    withAnimation(.easeIn(duration: 0.2)) {
+      isMenuPresented = false
+    }
+  }
+
+  private func openGoogleAuthenticatorImport() {
+    closeMenu()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+      isShowingGoogleImport = true
+    }
   }
 
   private var editorPresentationBinding: Binding<Bool> {

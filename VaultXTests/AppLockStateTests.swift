@@ -256,4 +256,38 @@ final class AppLockStateTests: XCTestCase {
         let confirmAgain = state.confirmPasscode("123456")
         XCTAssertFalse(confirmAgain)
     }
+    func testTrustedSystemPresentationDoesNotLockDuringTemporaryInactiveTransition() {
+        let store = MockPasscodeStore()
+        try? store.savePasscode("123456")
+
+        let installService = MockAppInstallationService()
+        installService.freshInstall = false
+        let state = AppLockState(passcodeStore: store, installationService: installService, biometricService: MockBiometricService(), faceIDPreferences: MockFaceIDPreferenceStore())
+
+        _ = state.verifyAndUnlock(passcode: "123456")
+        state.beginTrustedSystemPresentation()
+        state.appEnteredBackground()
+
+        XCTAssertEqual(state.currentState, .unlocked)
+
+        state.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
+        XCTAssertEqual(state.currentState, .unlocked)
+    }
+
+    func testTrustedSystemPresentationLocksWhenItEndsWhileStillBackgrounded() {
+        let store = MockPasscodeStore()
+        try? store.savePasscode("123456")
+
+        let installService = MockAppInstallationService()
+        installService.freshInstall = false
+        let state = AppLockState(passcodeStore: store, installationService: installService, biometricService: MockBiometricService(), faceIDPreferences: MockFaceIDPreferenceStore())
+
+        _ = state.verifyAndUnlock(passcode: "123456")
+        state.beginTrustedSystemPresentation()
+        state.appEnteredBackground()
+        state.endTrustedSystemPresentation(lockIfStillBackgrounded: true)
+
+        XCTAssertEqual(state.currentState, .locked)
+    }
+
 }

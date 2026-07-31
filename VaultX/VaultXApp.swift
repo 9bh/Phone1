@@ -28,6 +28,9 @@ struct VaultXApp: App {
         .onChange(of: scenePhase) { newPhase in
           if newPhase == .active {
             TOTPClock.shared.updateNow()
+            if appState.currentState == .unlocked {
+              TOTPClock.shared.start()
+            }
           } else if newPhase == .background || newPhase == .inactive {
             TOTPClock.shared.stop()
             appState.appEnteredBackground()

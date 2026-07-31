@@ -16,6 +16,8 @@ class AppLockState: ObservableObject {
     @Published private(set) var installationPreparationResult: InstallationPreparationResult = .existingInstallation
     
     private var tempPasscode: String = ""
+    private var trustedSystemPresentationDepth = 0
+    private var observedSceneTransitionDuringTrustedPresentation = false
     
     private let passcodeStore: PasscodeStore
     private let installationService: AppInstallationService
@@ -87,7 +89,30 @@ class AppLockState: ObservableObject {
         }
     }
     
+    func beginTrustedSystemPresentation() {
+        trustedSystemPresentationDepth += 1
+    }
+
+    func endTrustedSystemPresentation(lockIfStillBackgrounded: Bool) {
+        guard trustedSystemPresentationDepth > 0 else { return }
+
+        trustedSystemPresentationDepth -= 1
+        guard trustedSystemPresentationDepth == 0 else { return }
+
+        let shouldLock = lockIfStillBackgrounded && observedSceneTransitionDuringTrustedPresentation
+        observedSceneTransitionDuringTrustedPresentation = false
+
+        if shouldLock, currentState == .unlocked {
+            currentState = .locked
+        }
+    }
+
     func appEnteredBackground() {
+        if trustedSystemPresentationDepth > 0 {
+            observedSceneTransitionDuringTrustedPresentation = true
+            return
+        }
+
         if currentState == .unlocked {
             currentState = .locked
         }
