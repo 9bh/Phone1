@@ -111,6 +111,24 @@ final class VaultAccountsStore: ObservableObject {
         }
     }
 
+    func applyGoogleAuthenticatorImport(
+        updatedAccounts: [VaultAccount],
+        newAccounts: [VaultAccount]
+    ) async -> Result<Void, VaultMutationError> {
+        var updatesByID: [UUID: VaultAccount] = [:]
+        for account in updatedAccounts {
+            updatesByID[account.id] = account
+        }
+
+        return await performMutation { current in
+            var modified = current.map { account in
+                updatesByID[account.id] ?? account
+            }
+            modified.append(contentsOf: newAccounts)
+            return modified
+        }
+    }
+
     func deleteAccount(id: UUID) async -> Result<Void, VaultMutationError> {
         guard loadState == .loaded else {
             return .failure(.storeNotLoaded)

@@ -452,4 +452,64 @@ final class VaultAccountsStoreTests: XCTestCase {
         XCTAssertFalse(store.isMutationInProgress)
     }
 
+    func testGoogleAuthenticatorImportUpdatesAndAddsInSingleSave() async {
+        let existing = makeAccount(siteURL: "google.com")
+        var updated = existing
+        updated.has2FA = true
+        updated.totpSecret = "JBSWY3DPEHPK3PXP"
+        updated.totpIssuer = "Google"
+
+        let added = VaultAccount(
+            siteURL: "GitHub",
+            email: "developer@example.com",
+            password: "",
+            username: "",
+            notes: "",
+            has2FA: true,
+            totpSecret: "MZXW6YTBOI"
+        )
+
+        let persistence = TestVaultAccountsPersistence(accounts: [existing])
+        let store = VaultAccountsStore(persistence: persistence)
+        await store.unlockAndLoad()
+
+        let result = await store.applyGoogleAuthenticatorImport(
+            updatedAccounts: [updated],
+            newAccounts: [added]
+        )
+
+        guard case .success = result else {
+            return XCTFail("Import failed")
+        }
+        XCTAssertEqual(store.accounts, [updated, added])
+        let persisted = await persistence.snapshot()
+        XCTAssertEqual(persisted, [updated, added])
+    }
+
+    func testFailedGoogleAuthenticatorImportRollsBackWholeBatch() async {
+        let existing = makeAccount(siteURL: "google.com")
+        var updated = existing
+        updated.has2FA = true
+        updated.totpSecret = "JBSWY3DPEHPK3PXP"
+
+        let added = makeAccount(siteURL: "github.com")
+        let persistence = TestVaultAccountsPersistence(accounts: [existing])
+        await persistence.setSaveError(.temporaryFileWriteFailed)
+        let store = VaultAccountsStore(persistence: persistence)
+        await store.unlockAndLoad()
+
+        let result = await store.applyGoogleAuthenticatorImport(
+            updatedAccounts: [updated],
+            newAccounts: [added]
+        )
+
+        guard case .failure(let error) = result else {
+            return XCTFail("Import unexpectedly succeeded")
+        }
+        XCTAssertEqual(error, .saveFailed)
+        XCTAssertEqual(store.accounts, [existing])
+        let persisted = await persistence.snapshot()
+        XCTAssertEqual(persisted, [existing])
+    }
+
 }

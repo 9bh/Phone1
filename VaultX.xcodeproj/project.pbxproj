@@ -94,6 +94,11 @@
 				<string>70D4F7B1A91F3B7A64F66D80</string>
 				<string>02A69349A96191AA87399A53</string>
 				<string>3A03153E0A26659C920EE029</string>
+				<string>8A9DDC29388BA52FF2D97EB7</string>
+				<string>3AB2939D09DD6530086297FB</string>
+				<string>8C3B4076BAB0FD8AABB253D9</string>
+				<string>C9FB5D1E9DAD85E69FF24ABE</string>
+				<string>ACB67A52F9C1A6B341C3032F</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -224,6 +229,7 @@
 				<string>D2E5DA60A38D4FE1B5A62934</string>
 				<string>890C8E8B4BBB4F4FAEFFC6ED</string>
 				<string>1E1ED486DC420C58E0B78FBE</string>
+				<string>5EB7A9339B536D00BD1131D1</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -385,6 +391,7 @@
 				<string>C0D54C1D055842C1897DE647</string>
 				<string>884CAFE1019143D59F1C11B5</string>
 				<string>CD6E60B5B28C698C99168DD0</string>
+				<string>0863BB3EF5A40AAEC7E8DDAC</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -595,6 +602,11 @@
 				<string>C29DA3EE72A0CECDDBBFBB59</string>
 				<string>3BA447213174434D7962250B</string>
 				<string>EBCE26E7925B391466DC7CBB</string>
+				<string>4CE3C23395ECC2FBEBEAAF56</string>
+				<string>2531622CD242BD1B0A032212</string>
+				<string>50368FD334A3685C80CC2CBE</string>
+				<string>F212E15067F2470A8BC9BFED</string>
+				<string>42DF7FF014B1182FB366B9BE</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -1931,6 +1943,114 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>EBCE26E7925B391466DC7CBB</string>
+		</dict>
+		<key>4CE3C23395ECC2FBEBEAAF56</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Models/GoogleAuthenticatorImportModels.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>8A9DDC29388BA52FF2D97EB7</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>4CE3C23395ECC2FBEBEAAF56</string>
+		</dict>
+		<key>2531622CD242BD1B0A032212</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/GoogleAuthenticatorMigrationParser.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>3AB2939D09DD6530086297FB</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>2531622CD242BD1B0A032212</string>
+		</dict>
+		<key>50368FD334A3685C80CC2CBE</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Views/Home/VaultMainMenuView.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>8C3B4076BAB0FD8AABB253D9</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>50368FD334A3685C80CC2CBE</string>
+		</dict>
+		<key>F212E15067F2470A8BC9BFED</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Views/Home/GoogleAuthenticatorImportView.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C9FB5D1E9DAD85E69FF24ABE</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>F212E15067F2470A8BC9BFED</string>
+		</dict>
+		<key>0863BB3EF5A40AAEC7E8DDAC</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>GoogleAuthenticatorMigrationTests.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>5EB7A9339B536D00BD1131D1</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>0863BB3EF5A40AAEC7E8DDAC</string>
+		</dict>
+		<key>42DF7FF014B1182FB366B9BE</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/QRCodeImageDecoder.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>ACB67A52F9C1A6B341C3032F</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>42DF7FF014B1182FB366B9BE</string>
 		</dict>
 	</dict>
 	<key>rootObject</key>

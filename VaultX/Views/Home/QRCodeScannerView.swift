@@ -189,6 +189,185 @@ struct QRCodeScannerScreen: View {
     }
 }
 
+
+struct RawQRCodeScannerScreen: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let title: String
+    let instruction: String
+    let progressText: String?
+    let onCode: (String) -> Void
+
+    @State private var scannerIdentity = UUID()
+    @State private var permissionDenied = false
+    @State private var scannerError: String?
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            if permissionDenied {
+                permissionDeniedView
+            } else {
+                QRCodeCameraView(
+                    onCode: { value in
+                        onCode(value)
+                        dismiss()
+                    },
+                    onPermissionDenied: {
+                        permissionDenied = true
+                    },
+                    onFailure: { message in
+                        scannerError = message
+                    }
+                )
+                .id(scannerIdentity)
+                .ignoresSafeArea()
+
+                VStack(spacing: 18) {
+                    Spacer()
+
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.white, lineWidth: 3)
+                        .frame(width: 270, height: 270)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(Color.accentColor.opacity(0.9), lineWidth: 1)
+                                .padding(5)
+                        }
+
+                    Text(instruction)
+                        .font(.body.weight(.medium))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
+                        .background(.black.opacity(0.55))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                    if let progressText {
+                        Text(progressText)
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(.black.opacity(0.55))
+                            .clipShape(Capsule())
+                    }
+
+                    Text("تتم القراءة محليًا داخل الجهاز ولا تُحفظ صورة الرمز.")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 36)
+
+                    Spacer()
+                }
+                .allowsHitTesting(false)
+                .environment(\.layoutDirection, .rightToLeft)
+            }
+
+            VStack {
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(.black.opacity(0.55))
+                            .clipShape(Circle())
+                    }
+
+                    Spacer()
+
+                    Text(title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+
+                    Spacer()
+                    Color.clear.frame(width: 44, height: 44)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+                Spacer()
+            }
+            .environment(\.layoutDirection, .leftToRight)
+
+            if let scannerError {
+                ZStack {
+                    Color.black.opacity(0.65).ignoresSafeArea()
+
+                    VStack(alignment: .trailing, spacing: 18) {
+                        Text("تعذر تشغيل الماسح")
+                            .font(.title3.bold())
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+
+                        Text(scannerError)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.trailing)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+
+                        HStack(spacing: 12) {
+                            Button("إلغاء") { dismiss() }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                            Button("إعادة المحاولة") {
+                                scannerError = nil
+                                scannerIdentity = UUID()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    .padding(24)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .padding(.horizontal, 30)
+                    .environment(\.layoutDirection, .rightToLeft)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private var permissionDeniedView: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "camera.fill")
+                .font(.system(size: 44))
+                .foregroundColor(.white)
+
+            Text("يلزم السماح باستخدام الكاميرا")
+                .font(.title3.bold())
+                .foregroundColor(.white)
+
+            Text("افتح إعدادات VaultX وفعّل إذن الكاميرا لمسح رموز التصدير.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.78))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Button("فتح الإعدادات") {
+                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                UIApplication.shared.open(url)
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("إلغاء") { dismiss() }
+                .foregroundColor(.white)
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
 private struct QRCodeCameraView: UIViewControllerRepresentable {
     let onCode: (String) -> Void
     let onPermissionDenied: () -> Void

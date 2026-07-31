@@ -1,11 +1,20 @@
 import SwiftUI
 
+private enum VaultHomeSheet: String, Identifiable {
+  case menu
+  case googleAuthenticatorImport
+
+  var id: String { rawValue }
+}
+
 struct VaultHomeView: View {
   @EnvironmentObject var store: VaultAccountsStore
   @EnvironmentObject private var appState: AppLockState
   @EnvironmentObject private var editorSession: AccountEditorSession
   @State private var accountPendingDeletion: VaultAccount?
   @State private var showingDeleteConfirmation = false
+  @State private var activeHomeSheet: VaultHomeSheet?
+  @State private var presentsGoogleImportAfterMenu = false
 
   var body: some View {
     NavigationStack {
@@ -17,9 +26,17 @@ struct VaultHomeView: View {
         VStack(spacing: 0) {
           // Fake Search Bar
           HStack(spacing: 12) {
-            Image(systemName: "line.3.horizontal")
-              .foregroundColor(.primary)
-              .font(.system(size: 20))
+            Button {
+              activeHomeSheet = .menu
+            } label: {
+              Image(systemName: "line.3.horizontal")
+                .foregroundColor(.primary)
+                .font(.system(size: 20))
+                .frame(width: 32, height: 32)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("فتح القائمة")
 
             Text("بحث في الحسابات")
               .foregroundColor(.secondary)
@@ -127,6 +144,18 @@ struct VaultHomeView: View {
       AddAccountView()
         .interactiveDismissDisabled(true)
     }
+    .sheet(item: $activeHomeSheet, onDismiss: presentPendingHomeSheet) { sheet in
+      switch sheet {
+      case .menu:
+        VaultMainMenuView {
+          presentsGoogleImportAfterMenu = true
+          activeHomeSheet = nil
+        }
+        .presentationDetents([.medium])
+      case .googleAuthenticatorImport:
+        GoogleAuthenticatorImportView()
+      }
+    }
     .overlay {
       if showingDeleteConfirmation, accountPendingDeletion != nil {
         ZStack {
@@ -201,6 +230,12 @@ struct VaultHomeView: View {
         title: Text(alert.title), message: Text(alert.message),
         dismissButton: .default(Text("حسناً")))
     }
+  }
+
+  private func presentPendingHomeSheet() {
+    guard presentsGoogleImportAfterMenu else { return }
+    presentsGoogleImportAfterMenu = false
+    activeHomeSheet = .googleAuthenticatorImport
   }
 
   private var editorPresentationBinding: Binding<Bool> {
