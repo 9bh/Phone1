@@ -296,7 +296,7 @@ struct RawQRCodeScannerScreen: View {
             }
             .environment(\.layoutDirection, .leftToRight)
 
-            if let scannerError {
+            if let scannerErrorMessage = scannerError {
                 ZStack {
                     Color.black.opacity(0.65).ignoresSafeArea()
 
@@ -305,7 +305,7 @@ struct RawQRCodeScannerScreen: View {
                             .font(.title3.bold())
                             .frame(maxWidth: .infinity, alignment: .trailing)
 
-                        Text(scannerError)
+                        Text(scannerErrorMessage)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.trailing)
                             .frame(maxWidth: .infinity, alignment: .trailing)
