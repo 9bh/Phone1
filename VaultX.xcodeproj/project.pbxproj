@@ -195,7 +195,7 @@
 					<string>@executable_path/Frameworks</string>
 				</array>
 				<key>MARKETING_VERSION</key>
-				<string>1.2.0</string>
+				<string>1.2.1</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.smartsphere.VaultX</string>
 				<key>PRODUCT_NAME</key>
@@ -943,7 +943,7 @@
 					<string>@executable_path/Frameworks</string>
 				</array>
 				<key>MARKETING_VERSION</key>
-				<string>1.2.0</string>
+				<string>1.2.1</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.smartsphere.VaultX</string>
 				<key>PRODUCT_NAME</key>

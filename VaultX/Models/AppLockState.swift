@@ -264,6 +264,24 @@ class AppLockState: ObservableObject {
         currentState = .unlocked
     }
 
+    /// Verifies a sensitive settings change without destroying the current navigation state.
+    /// The trusted-presentation guard prevents the Face ID system sheet from triggering auto-lock.
+    func verifyOwnerWithFaceID(
+        reason: String,
+        completion: @escaping (BiometricAuthResult) -> Void
+    ) {
+        beginTrustedSystemPresentation()
+        biometricService.authenticate(reason: reason) { [weak self] result in
+            guard let self else {
+                completion(.notAvailable)
+                return
+            }
+
+            self.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
+            completion(result)
+        }
+    }
+
     private func clearTemporaryPasscode() {
         tempPasscode = ""
     }

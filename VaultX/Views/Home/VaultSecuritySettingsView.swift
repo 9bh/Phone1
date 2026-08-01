@@ -3,7 +3,8 @@ import SwiftUI
 struct VaultSecuritySettingsView: View {
     @EnvironmentObject private var settings: VaultSecuritySettings
     @EnvironmentObject private var appState: AppLockState
-    @State private var isShowingFaceIDUnavailableAlert = false
+    @State private var faceIDAlert: FaceIDSettingsAlert?
+    @State private var isVerifyingFaceIDDisable = false
 
     var body: some View {
         Form {
@@ -11,10 +12,13 @@ struct VaultSecuritySettingsView: View {
                 Toggle(isOn: faceIDBinding) {
                     settingsLabel(
                         title: "استخدام Face ID",
-                        subtitle: "فتح VaultX باستخدام بصمة الوجه",
+                        subtitle: isVerifyingFaceIDDisable
+                            ? "جاري التحقق من هويتك..."
+                            : "فتح VaultX باستخدام بصمة الوجه",
                         systemImage: "faceid"
                     )
                 }
+                .disabled(isVerifyingFaceIDDisable)
 
                 Picker(selection: $settings.autoLockDelay) {
                     ForEach(AutoLockDelay.allCases) { delay in
@@ -98,10 +102,12 @@ struct VaultSecuritySettingsView: View {
         .navigationTitle("الإعدادات والأمان")
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.layoutDirection, .rightToLeft)
-        .alert("Face ID غير متاح", isPresented: $isShowingFaceIDUnavailableAlert) {
-            Button("حسنًا", role: .cancel) {}
-        } message: {
-            Text("تأكد من إعداد Face ID في الآيفون ثم حاول مرة أخرى.")
+        .alert(item: $faceIDAlert) { alert in
+            Alert(
+                title: Text(alert.title),
+                message: Text(alert.message),
+                dismissButton: .default(Text("حسنًا"))
+            )
         }
     }
 
@@ -109,11 +115,37 @@ struct VaultSecuritySettingsView: View {
         Binding(
             get: { settings.isFaceIDEnabled },
             set: { newValue in
-                if newValue && !appState.biometricService.canEvaluateFaceID() {
-                    isShowingFaceIDUnavailableAlert = true
-                    settings.isFaceIDEnabled = false
-                } else {
-                    settings.isFaceIDEnabled = newValue
+                guard newValue != settings.isFaceIDEnabled else { return }
+
+                if newValue {
+                    guard appState.biometricService.canEvaluateFaceID() else {
+                        faceIDAlert = .unavailable
+                        return
+                    }
+                    settings.isFaceIDEnabled = true
+                    return
+                }
+
+                guard !isVerifyingFaceIDDisable else { return }
+                isVerifyingFaceIDDisable = true
+
+                appState.verifyOwnerWithFaceID(
+                    reason: "تحقق من هويتك لإيقاف Face ID في VaultX"
+                ) { result in
+                    isVerifyingFaceIDDisable = false
+
+                    switch result {
+                    case .success:
+                        settings.isFaceIDEnabled = false
+                    case .cancelled:
+                        break
+                    case .authenticationFailed:
+                        faceIDAlert = .verificationFailed
+                    case .lockedOut:
+                        faceIDAlert = .lockedOut
+                    case .notEnrolled, .notAvailable:
+                        faceIDAlert = .unavailable
+                    }
                 }
             }
         )
@@ -148,6 +180,42 @@ struct VaultSecuritySettingsView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.leading)
+        }
+    }
+}
+
+private enum FaceIDSettingsAlert: Identifiable {
+    case unavailable
+    case verificationFailed
+    case lockedOut
+
+    var id: String {
+        switch self {
+        case .unavailable: return "unavailable"
+        case .verificationFailed: return "verificationFailed"
+        case .lockedOut: return "lockedOut"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .unavailable:
+            return "Face ID غير متاح"
+        case .verificationFailed:
+            return "لم يتم إيقاف Face ID"
+        case .lockedOut:
+            return "Face ID مقفل مؤقتًا"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .unavailable:
+            return "تأكد من إعداد Face ID في الآيفون ثم حاول مرة أخرى."
+        case .verificationFailed:
+            return "لم ينجح التحقق من هويتك، لذلك بقي Face ID مفعّلًا."
+        case .lockedOut:
+            return "أعد تفعيل Face ID من خلال فتح الآيفون، ثم حاول مرة أخرى."
         }
     }
 }

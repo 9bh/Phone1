@@ -314,6 +314,61 @@ final class AppLockStateTests: XCTestCase {
         XCTAssertEqual(state.currentState, .unlocked)
     }
 
+    func testSensitiveFaceIDVerificationSucceedsWithoutLockingVault() {
+        let store = MockPasscodeStore()
+        try? store.savePasscode("123456")
+
+        let installService = MockAppInstallationService()
+        installService.freshInstall = false
+        let biometric = MockBiometricService()
+        biometric.result = .success
+        let state = AppLockState(
+            passcodeStore: store,
+            installationService: installService,
+            biometricService: biometric,
+            faceIDPreferences: MockFaceIDPreferenceStore()
+        )
+
+        _ = state.verifyAndUnlock(passcode: "123456")
+        var receivedSuccess = false
+        state.verifyOwnerWithFaceID(reason: "Test") { result in
+            if case .success = result {
+                receivedSuccess = true
+            }
+        }
+
+        XCTAssertTrue(receivedSuccess)
+        XCTAssertEqual(biometric.authenticateCallCount, 1)
+        XCTAssertEqual(state.currentState, .unlocked)
+    }
+
+    func testSensitiveFaceIDVerificationFailureKeepsVaultUnlocked() {
+        let store = MockPasscodeStore()
+        try? store.savePasscode("123456")
+
+        let installService = MockAppInstallationService()
+        installService.freshInstall = false
+        let biometric = MockBiometricService()
+        biometric.result = .authenticationFailed
+        let state = AppLockState(
+            passcodeStore: store,
+            installationService: installService,
+            biometricService: biometric,
+            faceIDPreferences: MockFaceIDPreferenceStore()
+        )
+
+        _ = state.verifyAndUnlock(passcode: "123456")
+        var receivedFailure = false
+        state.verifyOwnerWithFaceID(reason: "Test") { result in
+            if case .authenticationFailed = result {
+                receivedFailure = true
+            }
+        }
+
+        XCTAssertTrue(receivedFailure)
+        XCTAssertEqual(state.currentState, .unlocked)
+    }
+
     func testDelayedAutoLockLocksVaultWhenReturningAfterDeadline() {
         let store = MockPasscodeStore()
         try? store.savePasscode("123456")

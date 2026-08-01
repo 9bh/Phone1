@@ -18,7 +18,7 @@ struct VaultHomeView: View {
   @State private var accountPendingDeletion: VaultAccount?
   @State private var showingDeleteConfirmation = false
   @State private var menuDragTranslation: CGFloat = 0
-  @State private var isEdgeDragging = false
+  @State private var isMenuDragging = false
 
   var body: some View {
     NavigationStack(path: $navigationSession.path) {
@@ -116,8 +116,8 @@ struct VaultHomeView: View {
           }
         }
         .environment(\.layoutDirection, .rightToLeft)
-        .allowsHitTesting(!navigationSession.isMenuPresented && !isEdgeDragging)
-        .accessibilityHidden(navigationSession.isMenuPresented || isEdgeDragging)
+        .allowsHitTesting(!navigationSession.isMenuPresented && !isMenuDragging)
+        .accessibilityHidden(navigationSession.isMenuPresented || isMenuDragging)
       }
       .overlay(alignment: .bottomTrailing) {
         Button {
@@ -175,7 +175,7 @@ struct VaultHomeView: View {
     .onChange(of: scenePhase) { newPhase in
       if newPhase != .active {
         menuDragTranslation = 0
-        isEdgeDragging = false
+        isMenuDragging = false
       }
     }
   }
@@ -251,14 +251,16 @@ struct VaultHomeView: View {
   private var sideMenuOverlay: some View {
     GeometryReader { proxy in
       let menuWidth = min(proxy.size.width * 0.86, 360)
-      let dragProgress = min(max(menuDragTranslation / menuWidth, 0), 1)
-      let presentationProgress = navigationSession.isMenuPresented ? 1 : dragProgress
+      let rawProgress: CGFloat = navigationSession.isMenuPresented
+        ? 1 + min(menuDragTranslation, 0) / menuWidth
+        : max(menuDragTranslation, 0) / menuWidth
+      let presentationProgress = min(max(rawProgress, 0), 1)
 
       ZStack(alignment: .leading) {
         Color.black.opacity(0.48 * presentationProgress)
           .ignoresSafeArea()
           .contentShape(Rectangle())
-          .allowsHitTesting(navigationSession.isMenuPresented || isEdgeDragging)
+          .allowsHitTesting(navigationSession.isMenuPresented || isMenuDragging)
           .onTapGesture {
             closeMenu()
           }
@@ -283,12 +285,8 @@ struct VaultHomeView: View {
         .offset(x: -menuWidth * (1 - presentationProgress))
         .allowsHitTesting(navigationSession.isMenuPresented)
         .gesture(
-          DragGesture(minimumDistance: 20)
-            .onEnded { value in
-              if value.translation.width < -70 {
-                closeMenu()
-              }
-            }
+          menuCloseGesture(menuWidth: menuWidth),
+          including: navigationSession.isMenuPresented ? .all : .none
         )
 
         if canOpenMenuFromEdge && !navigationSession.isMenuPresented {
@@ -301,7 +299,7 @@ struct VaultHomeView: View {
         }
       }
       .environment(\.layoutDirection, .leftToRight)
-      .accessibilityHidden(!navigationSession.isMenuPresented && !isEdgeDragging)
+      .accessibilityHidden(!navigationSession.isMenuPresented && !isMenuDragging)
       .animation(.easeInOut(duration: 0.24), value: navigationSession.isMenuPresented)
     }
     .zIndex(100)
@@ -323,11 +321,11 @@ struct VaultHomeView: View {
         let vertical = value.translation.height
 
         guard horizontal > 0, abs(horizontal) > abs(vertical) else { return }
-        isEdgeDragging = true
+        isMenuDragging = true
         menuDragTranslation = min(horizontal, menuWidth)
       }
       .onEnded { value in
-        guard isEdgeDragging else {
+        guard isMenuDragging else {
           menuDragTranslation = 0
           return
         }
@@ -339,14 +337,44 @@ struct VaultHomeView: View {
         withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
           navigationSession.isMenuPresented = shouldOpen
           menuDragTranslation = 0
-          isEdgeDragging = false
+          isMenuDragging = false
+        }
+      }
+  }
+
+  private func menuCloseGesture(menuWidth: CGFloat) -> some Gesture {
+    DragGesture(minimumDistance: 3, coordinateSpace: .local)
+      .onChanged { value in
+        guard navigationSession.isMenuPresented else { return }
+
+        let horizontal = value.translation.width
+        let vertical = value.translation.height
+        guard horizontal < 0, abs(horizontal) > abs(vertical) else { return }
+
+        isMenuDragging = true
+        menuDragTranslation = max(horizontal, -menuWidth)
+      }
+      .onEnded { value in
+        guard isMenuDragging else {
+          menuDragTranslation = 0
+          return
+        }
+
+        let projectedWidth = min(value.translation.width, value.predictedEndTranslation.width)
+        let shouldClose = abs(menuDragTranslation) >= menuWidth * 0.32
+          || abs(projectedWidth) >= menuWidth * 0.55
+
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+          navigationSession.isMenuPresented = !shouldClose
+          menuDragTranslation = 0
+          isMenuDragging = false
         }
       }
   }
 
   private func openMenu() {
     menuDragTranslation = 0
-    isEdgeDragging = false
+    isMenuDragging = false
     withAnimation(.easeOut(duration: 0.24)) {
       navigationSession.isMenuPresented = true
     }
@@ -354,7 +382,7 @@ struct VaultHomeView: View {
 
   private func closeMenu() {
     menuDragTranslation = 0
-    isEdgeDragging = false
+    isMenuDragging = false
     withAnimation(.easeIn(duration: 0.2)) {
       navigationSession.isMenuPresented = false
     }
