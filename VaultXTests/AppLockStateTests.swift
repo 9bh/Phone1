@@ -290,4 +290,52 @@ final class AppLockStateTests: XCTestCase {
         XCTAssertEqual(state.currentState, .locked)
     }
 
+    func testDelayedAutoLockKeepsVaultUnlockedWhenReturningBeforeDeadline() {
+        let store = MockPasscodeStore()
+        try? store.savePasscode("123456")
+
+        let installService = MockAppInstallationService()
+        installService.freshInstall = false
+        let state = AppLockState(
+            passcodeStore: store,
+            installationService: installService,
+            biometricService: MockBiometricService(),
+            faceIDPreferences: MockFaceIDPreferenceStore(),
+            autoLockDelayProvider: { 30 }
+        )
+
+        _ = state.verifyAndUnlock(passcode: "123456")
+        let backgroundDate = Date()
+        state.appEnteredBackground(at: backgroundDate)
+
+        XCTAssertEqual(state.currentState, .unlocked)
+
+        state.appBecameActive(at: backgroundDate.addingTimeInterval(10))
+        XCTAssertEqual(state.currentState, .unlocked)
+    }
+
+    func testDelayedAutoLockLocksVaultWhenReturningAfterDeadline() {
+        let store = MockPasscodeStore()
+        try? store.savePasscode("123456")
+
+        let installService = MockAppInstallationService()
+        installService.freshInstall = false
+        let state = AppLockState(
+            passcodeStore: store,
+            installationService: installService,
+            biometricService: MockBiometricService(),
+            faceIDPreferences: MockFaceIDPreferenceStore(),
+            autoLockDelayProvider: { 30 }
+        )
+
+        _ = state.verifyAndUnlock(passcode: "123456")
+        let backgroundDate = Date()
+        state.appEnteredBackground(at: backgroundDate)
+
+        XCTAssertEqual(state.currentState, .unlocked)
+
+        state.appBecameActive(at: backgroundDate.addingTimeInterval(31))
+        XCTAssertEqual(state.currentState, .locked)
+    }
+
 }

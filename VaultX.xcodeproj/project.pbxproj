@@ -99,6 +99,8 @@
 				<string>8C3B4076BAB0FD8AABB253D9</string>
 				<string>C9FB5D1E9DAD85E69FF24ABE</string>
 				<string>ACB67A52F9C1A6B341C3032F</string>
+				<string>6084E3313094D37B952D69EA</string>
+				<string>A24C0B51A3FF59A97E65D6F9</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -166,7 +168,7 @@
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
 				<key>CURRENT_PROJECT_VERSION</key>
-				<string>2</string>
+				<string>3</string>
 				<key>ENABLE_PREVIEWS</key>
 				<string>YES</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -193,7 +195,7 @@
 					<string>@executable_path/Frameworks</string>
 				</array>
 				<key>MARKETING_VERSION</key>
-				<string>1.1.0</string>
+				<string>1.2.0</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.smartsphere.VaultX</string>
 				<key>PRODUCT_NAME</key>
@@ -232,6 +234,7 @@
 				<string>890C8E8B4BBB4F4FAEFFC6ED</string>
 				<string>1E1ED486DC420C58E0B78FBE</string>
 				<string>5EB7A9339B536D00BD1131D1</string>
+				<string>B9B8C06DCDDE90D3456207B8</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -394,6 +397,7 @@
 				<string>884CAFE1019143D59F1C11B5</string>
 				<string>CD6E60B5B28C698C99168DD0</string>
 				<string>0863BB3EF5A40AAEC7E8DDAC</string>
+				<string>577FAA88189E68B2EADD3075</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -609,6 +613,8 @@
 				<string>50368FD334A3685C80CC2CBE</string>
 				<string>F212E15067F2470A8BC9BFED</string>
 				<string>42DF7FF014B1182FB366B9BE</string>
+				<string>0B9422D4ED43A21F96015630</string>
+				<string>331CF4D5AD851707EDD7E067</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -910,7 +916,7 @@
 				<key>CODE_SIGN_STYLE</key>
 				<string>Automatic</string>
 				<key>CURRENT_PROJECT_VERSION</key>
-				<string>2</string>
+				<string>3</string>
 				<key>ENABLE_PREVIEWS</key>
 				<string>YES</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -937,7 +943,7 @@
 					<string>@executable_path/Frameworks</string>
 				</array>
 				<key>MARKETING_VERSION</key>
-				<string>1.1.0</string>
+				<string>1.2.0</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.smartsphere.VaultX</string>
 				<key>PRODUCT_NAME</key>
@@ -2059,6 +2065,60 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>42DF7FF014B1182FB366B9BE</string>
+		</dict>
+		<key>0B9422D4ED43A21F96015630</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Services/SecureClipboardService.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>6084E3313094D37B952D69EA</key>
+		<dict>
+			<key>fileRef</key>
+			<string>0B9422D4ED43A21F96015630</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>331CF4D5AD851707EDD7E067</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Views/Home/VaultSecuritySettingsView.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>A24C0B51A3FF59A97E65D6F9</key>
+		<dict>
+			<key>fileRef</key>
+			<string>331CF4D5AD851707EDD7E067</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>577FAA88189E68B2EADD3075</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>VaultSecuritySettingsTests.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>B9B8C06DCDDE90D3456207B8</key>
+		<dict>
+			<key>fileRef</key>
+			<string>577FAA88189E68B2EADD3075</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
 		</dict>
 	</dict>
 	<key>rootObject</key>

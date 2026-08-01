@@ -72,5 +72,6 @@ struct AppRootView: View {
     AppRootView()
       .environmentObject(AppLockState.preview(state: .needsPasscodeSetup))
       .environmentObject(VaultAccountsStore.preview(loadState: .locked))
+      .environmentObject(VaultSecuritySettings())
   }
 #endif

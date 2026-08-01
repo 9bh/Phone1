@@ -12,10 +12,13 @@ enum CopiedField: Hashable {
 
 struct AccountDetailView: View {
     let account: VaultAccount
-    
+
+    @EnvironmentObject private var settings: VaultSecuritySettings
+    @Environment(\.scenePhase) private var scenePhase
     @State private var isPasswordVisible = false
     @State private var copiedField: CopiedField? = nil
     @State private var isTOTPSecretVisible = false
+    @State private var isTOTPCodeRevealed = false
     @ObservedObject private var clock = TOTPClock.shared
     
     private var currentTOTP: TOTPCode? {
@@ -68,12 +71,7 @@ struct AccountDetailView: View {
                                 Spacer()
                                 
                                 if let totp = currentTOTP {
-                                    let codeString = totp.value
-                                    let midIndex = codeString.index(codeString.startIndex, offsetBy: codeString.count / 2)
-                                    let firstHalf = String(codeString[..<midIndex])
-                                    let secondHalf = String(codeString[midIndex...])
-                                    
-                                    Text("\(firstHalf) \(secondHalf)")
+                                    Text(displayedTOTPCode(totp.value))
                                         .font(.system(size: 28, weight: .regular, design: .monospaced))
                                         .foregroundColor(.primary)
                                         .lineLimit(1)
@@ -81,9 +79,26 @@ struct AccountDetailView: View {
                                         .monospacedDigit()
                                         .privacySensitive()
                                         .layoutPriority(1)
-                                    
+                                        .animation(.easeInOut(duration: 0.18), value: shouldMaskTOTPCode)
+
                                     Spacer()
-                                    
+
+                                    if settings.hideTOTPCodesByDefault {
+                                        Button {
+                                            withAnimation(.easeInOut(duration: 0.18)) {
+                                                isTOTPCodeRevealed.toggle()
+                                            }
+                                        } label: {
+                                            Image(systemName: isTOTPCodeRevealed ? "eye.slash" : "eye")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(.primary)
+                                                .frame(width: 44, height: 44)
+                                                .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                                                .cornerRadius(10)
+                                        }
+                                        .accessibilityLabel(isTOTPCodeRevealed ? "إخفاء رمز التحقق" : "إظهار رمز التحقق")
+                                    }
+
                                     Button(action: {
                                         copyToClipboard(totp.value, field: .twoFA)
                                     }) {
@@ -257,6 +272,18 @@ struct AccountDetailView: View {
         .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("تفاصيل الحساب: \(account.serviceName)")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase != .active {
+                isPasswordVisible = false
+                isTOTPSecretVisible = false
+                isTOTPCodeRevealed = false
+            }
+        }
+        .onChange(of: settings.hideTOTPCodesByDefault) { shouldHide in
+            if shouldHide {
+                isTOTPCodeRevealed = false
+            }
+        }
     }
     
     // Helper to build consistent detail rows
@@ -337,9 +364,19 @@ struct AccountDetailView: View {
         }
     }
     
+    private var shouldMaskTOTPCode: Bool {
+        settings.hideTOTPCodesByDefault && !isTOTPCodeRevealed
+    }
+
+    private func displayedTOTPCode(_ code: String) -> String {
+        guard !shouldMaskTOTPCode else { return "••• •••" }
+        let midpoint = code.index(code.startIndex, offsetBy: code.count / 2)
+        return "\(code[..<midpoint]) \(code[midpoint...])"
+    }
+
     private func copyToClipboard(_ text: String, field: CopiedField) {
         guard !text.isEmpty else { return }
-        UIPasteboard.general.string = text
+        SecureClipboardService.copy(text, expiresAfter: settings.clipboardClearDelay.seconds)
         copiedField = field
         
         // Reset feedback after 2 seconds
@@ -355,6 +392,7 @@ struct AccountDetailView: View {
 #Preview("With 2FA and Backup") {
     NavigationStack {
         AccountDetailView(account: VaultAccount(siteURL: "google.com", email: "user@gmail.com", password: "secretpassword", username: "user123", notes: "Some notes", has2FA: true, hasBackupFile: true))
+            .environmentObject(VaultSecuritySettings())
             .environment(\.layoutDirection, .rightToLeft)
             .preferredColorScheme(.dark)
     }
@@ -363,6 +401,7 @@ struct AccountDetailView: View {
 #Preview("Without 2FA") {
     NavigationStack {
         AccountDetailView(account: VaultAccount(siteURL: "microsoft.com", email: "work@domain.com", password: "password123", username: "", notes: "", has2FA: false, hasBackupFile: false))
+            .environmentObject(VaultSecuritySettings())
             .environment(\.layoutDirection, .rightToLeft)
             .preferredColorScheme(.dark)
     }

@@ -3,6 +3,7 @@ import SwiftUI
 struct VaultMainMenuView: View {
     let onClose: () -> Void
     let onGoogleAuthenticatorImport: () -> Void
+    let onSecuritySettings: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,30 +33,17 @@ struct VaultMainMenuView: View {
             Divider()
                 .padding(.horizontal, 20)
 
-            Button(action: onGoogleAuthenticatorImport) {
-                HStack(spacing: 14) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.accentColor)
-                        .frame(width: 38, height: 38)
-                        .background(Color.accentColor.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 11))
+            menuButton(
+                title: "استيراد من Google Authenticator",
+                systemImage: "square.and.arrow.down",
+                action: onGoogleAuthenticatorImport
+            )
 
-                    Text("استيراد من Google Authenticator")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-
-                    Image(systemName: "chevron.left")
-                        .font(.caption.weight(.bold))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .environment(\.layoutDirection, .leftToRight)
+            menuButton(
+                title: "الإعدادات والأمان",
+                systemImage: "gearshape.fill",
+                action: onSecuritySettings
+            )
 
             Spacer(minLength: 0)
 
@@ -65,6 +53,37 @@ struct VaultMainMenuView: View {
                 .padding(.bottom, 18)
         }
         .background(Color(uiColor: .secondarySystemBackground))
+    }
+
+    private func menuButton(
+        title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.accentColor)
+                    .frame(width: 38, height: 38)
+                    .background(Color.accentColor.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 11))
+
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Image(systemName: "chevron.left")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var versionText: String {
@@ -77,8 +96,12 @@ struct VaultMainMenuView: View {
 
 #if DEBUG
 #Preview {
-    VaultMainMenuView(onClose: {}, onGoogleAuthenticatorImport: {})
-        .frame(width: 340)
-        .preferredColorScheme(.dark)
+    VaultMainMenuView(
+        onClose: {},
+        onGoogleAuthenticatorImport: {},
+        onSecuritySettings: {}
+    )
+    .frame(width: 340)
+    .preferredColorScheme(.dark)
 }
 #endif

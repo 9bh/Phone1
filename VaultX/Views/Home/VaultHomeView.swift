@@ -5,6 +5,7 @@ final class VaultNavigationSession: ObservableObject {
   @Published var path: [UUID] = []
   @Published var isMenuPresented = false
   @Published var isShowingGoogleImport = false
+  @Published var isShowingSecuritySettings = false
 }
 
 struct VaultHomeView: View {
@@ -13,8 +14,11 @@ struct VaultHomeView: View {
   @EnvironmentObject private var editorSession: AccountEditorSession
   @EnvironmentObject private var navigationSession: VaultNavigationSession
   @EnvironmentObject private var googleImportSession: GoogleAuthenticatorImportSession
+  @Environment(\.scenePhase) private var scenePhase
   @State private var accountPendingDeletion: VaultAccount?
   @State private var showingDeleteConfirmation = false
+  @State private var menuDragTranslation: CGFloat = 0
+  @State private var isEdgeDragging = false
 
   var body: some View {
     NavigationStack(path: $navigationSession.path) {
@@ -112,8 +116,8 @@ struct VaultHomeView: View {
           }
         }
         .environment(\.layoutDirection, .rightToLeft)
-        .allowsHitTesting(!navigationSession.isMenuPresented)
-        .accessibilityHidden(navigationSession.isMenuPresented)
+        .allowsHitTesting(!navigationSession.isMenuPresented && !isEdgeDragging)
+        .accessibilityHidden(navigationSession.isMenuPresented || isEdgeDragging)
       }
       .overlay(alignment: .bottomTrailing) {
         Button {
@@ -143,6 +147,9 @@ struct VaultHomeView: View {
             .environment(\.layoutDirection, .rightToLeft)
         }
       }
+      .navigationDestination(isPresented: securitySettingsPresentationBinding) {
+        VaultSecuritySettingsView()
+      }
     }
     .sheet(isPresented: editorPresentationBinding) {
       AddAccountView()
@@ -164,6 +171,12 @@ struct VaultHomeView: View {
       Alert(
         title: Text(alert.title), message: Text(alert.message),
         dismissButton: .default(Text("حسناً")))
+    }
+    .onChange(of: scenePhase) { newPhase in
+      if newPhase != .active {
+        menuDragTranslation = 0
+        isEdgeDragging = false
+      }
     }
   }
 
@@ -238,18 +251,22 @@ struct VaultHomeView: View {
   private var sideMenuOverlay: some View {
     GeometryReader { proxy in
       let menuWidth = min(proxy.size.width * 0.86, 360)
+      let dragProgress = min(max(menuDragTranslation / menuWidth, 0), 1)
+      let presentationProgress = navigationSession.isMenuPresented ? 1 : dragProgress
 
       ZStack(alignment: .leading) {
-        Color.black.opacity(navigationSession.isMenuPresented ? 0.48 : 0)
+        Color.black.opacity(0.48 * presentationProgress)
           .ignoresSafeArea()
           .contentShape(Rectangle())
+          .allowsHitTesting(navigationSession.isMenuPresented || isEdgeDragging)
           .onTapGesture {
             closeMenu()
           }
 
         VaultMainMenuView(
           onClose: closeMenu,
-          onGoogleAuthenticatorImport: openGoogleAuthenticatorImport
+          onGoogleAuthenticatorImport: openGoogleAuthenticatorImport,
+          onSecuritySettings: openSecuritySettings
         )
         .frame(width: menuWidth)
         .frame(maxHeight: .infinity)
@@ -262,8 +279,9 @@ struct VaultHomeView: View {
             topTrailingRadius: 24
           )
         )
-        .shadow(color: .black.opacity(navigationSession.isMenuPresented ? 0.3 : 0), radius: 24, x: 10, y: 0)
-        .offset(x: navigationSession.isMenuPresented ? 0 : -menuWidth)
+        .shadow(color: .black.opacity(0.3 * presentationProgress), radius: 24, x: 10, y: 0)
+        .offset(x: -menuWidth * (1 - presentationProgress))
+        .allowsHitTesting(navigationSession.isMenuPresented)
         .gesture(
           DragGesture(minimumDistance: 20)
             .onEnded { value in
@@ -272,22 +290,71 @@ struct VaultHomeView: View {
               }
             }
         )
+
+        if canOpenMenuFromEdge && !navigationSession.isMenuPresented {
+          Color.clear
+            .frame(width: 28)
+            .frame(maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .gesture(edgeOpenGesture(menuWidth: menuWidth))
+            .accessibilityHidden(true)
+        }
       }
       .environment(\.layoutDirection, .leftToRight)
-      .allowsHitTesting(navigationSession.isMenuPresented)
-      .accessibilityHidden(!navigationSession.isMenuPresented)
+      .accessibilityHidden(!navigationSession.isMenuPresented && !isEdgeDragging)
       .animation(.easeInOut(duration: 0.24), value: navigationSession.isMenuPresented)
     }
     .zIndex(100)
   }
 
+  private var canOpenMenuFromEdge: Bool {
+    appState.currentState == .unlocked
+      && navigationSession.path.isEmpty
+      && !navigationSession.isShowingGoogleImport
+      && !navigationSession.isShowingSecuritySettings
+      && !editorSession.isPresented
+      && !showingDeleteConfirmation
+  }
+
+  private func edgeOpenGesture(menuWidth: CGFloat) -> some Gesture {
+    DragGesture(minimumDistance: 3, coordinateSpace: .local)
+      .onChanged { value in
+        let horizontal = value.translation.width
+        let vertical = value.translation.height
+
+        guard horizontal > 0, abs(horizontal) > abs(vertical) else { return }
+        isEdgeDragging = true
+        menuDragTranslation = min(horizontal, menuWidth)
+      }
+      .onEnded { value in
+        guard isEdgeDragging else {
+          menuDragTranslation = 0
+          return
+        }
+
+        let projectedWidth = max(value.translation.width, value.predictedEndTranslation.width)
+        let shouldOpen = menuDragTranslation >= menuWidth * 0.32
+          || projectedWidth >= menuWidth * 0.55
+
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+          navigationSession.isMenuPresented = shouldOpen
+          menuDragTranslation = 0
+          isEdgeDragging = false
+        }
+      }
+  }
+
   private func openMenu() {
+    menuDragTranslation = 0
+    isEdgeDragging = false
     withAnimation(.easeOut(duration: 0.24)) {
       navigationSession.isMenuPresented = true
     }
   }
 
   private func closeMenu() {
+    menuDragTranslation = 0
+    isEdgeDragging = false
     withAnimation(.easeIn(duration: 0.2)) {
       navigationSession.isMenuPresented = false
     }
@@ -298,6 +365,26 @@ struct VaultHomeView: View {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
       navigationSession.isShowingGoogleImport = true
     }
+  }
+
+  private func openSecuritySettings() {
+    closeMenu()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+      navigationSession.isShowingSecuritySettings = true
+    }
+  }
+
+  private var securitySettingsPresentationBinding: Binding<Bool> {
+    Binding(
+      get: { navigationSession.isShowingSecuritySettings },
+      set: { isPresented in
+        if isPresented {
+          navigationSession.isShowingSecuritySettings = true
+        } else if appState.currentState == .unlocked {
+          navigationSession.isShowingSecuritySettings = false
+        }
+      }
+    )
   }
 
   private var googleImportPresentationBinding: Binding<Bool> {
@@ -335,6 +422,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultSecuritySettings())
       .preferredColorScheme(.dark)
   }
 
@@ -345,6 +433,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultSecuritySettings())
       .preferredColorScheme(.light)
   }
 
@@ -355,6 +444,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultSecuritySettings())
       .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
   }
 
@@ -374,6 +464,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultSecuritySettings())
       .preferredColorScheme(.dark)
   }
 #endif
