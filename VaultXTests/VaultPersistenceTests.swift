@@ -800,27 +800,46 @@ final class VaultPersistenceTests: XCTestCase {
     }
     
     func test33_Gate_ImmediateCancellationOnFreeGate() async throws {
-        for _ in 0..<1000 {
+        let operationRecorder = IntEventRecorder()
+
+        for _ in 0..<100 {
             let gate = AsyncFIFOTransactionGate()
-            let t = Task {
+            let startGateCall = AsyncEventLatch()
+
+            let task = Task {
+                // Hold the task outside the gate so cancellation is guaranteed
+                // to be set before withLock begins. Cancelling immediately after
+                // Task creation is otherwise a scheduling race: the task may
+                // finish before the caller executes cancel().
+                await startGateCall.wait()
                 try await gate.withLock {
-                    await Task.yield()
+                    await operationRecorder.append(1)
                 }
             }
-            t.cancel()
-            
+
+            task.cancel()
+            await startGateCall.signal()
+
             do {
-                _ = try await t.value
+                _ = try await task.value
                 XCTFail("Should throw cancellation")
             } catch is CancellationError {
-                // Expected
+                // Expected.
+            } catch {
+                XCTFail("Expected CancellationError, got: \(error)")
             }
-            
+
             let snapshot = await gate.snapshot()
             XCTAssertFalse(snapshot.ownerPresent)
             XCTAssertEqual(snapshot.queuedCount, 0)
             XCTAssertEqual(snapshot.registeredCount, 0)
         }
+
+        let recordedOperations = await operationRecorder.snapshot()
+        XCTAssertTrue(
+            recordedOperations.isEmpty,
+            "A task cancelled before entering the gate must never run its operation"
+        )
     }
 
     func test34_Gate_LateCancellationAfterNormalRelease() async throws {
