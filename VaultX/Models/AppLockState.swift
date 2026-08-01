@@ -259,6 +259,19 @@ class AppLockState: ObservableObject {
         }
     }
 
+    /// Verifies the owner for a sensitive action without changing the lock or navigation state.
+    func verifyOwnerPasscode(_ passcode: String) -> PasscodeVerificationResult {
+        guard PasscodeValidator.isValidPasscode(passcode) else {
+            return .invalidInput
+        }
+
+        do {
+            return try passcodeStore.verifyPasscode(passcode) ? .success : .incorrect
+        } catch {
+            return .storageUnavailable
+        }
+    }
+
     func unlockSuccessfully() {
         cancelPendingLock(clearBackgroundDate: true)
         currentState = .unlocked

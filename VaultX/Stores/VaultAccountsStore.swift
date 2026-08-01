@@ -129,6 +129,75 @@ final class VaultAccountsStore: ObservableObject {
         }
     }
 
+    /// Commits an entire restored account set atomically and publishes it only after
+    /// the encrypted persistence layer confirms the write.
+    func applyBackupRestore(
+        finalAccounts: [VaultAccount]
+    ) async -> Result<Void, VaultMutationError> {
+        guard loadState == .loaded else {
+            return .failure(.storeNotLoaded)
+        }
+        guard activeMutationID == nil else {
+            return .failure(.mutationInProgress)
+        }
+        guard finalAccounts != accounts else {
+            return .success(())
+        }
+
+        let mutationID = UUID()
+        let session = currentSessionGeneration
+        let snapshot = accounts
+
+        activeMutationID = mutationID
+        isMutationInProgress = true
+
+        do {
+            try await persistence.saveAccounts(finalAccounts)
+
+            guard session == currentSessionGeneration,
+                  loadState == .loaded else {
+                finishMutationIfCurrent(mutationID)
+                return .success(())
+            }
+
+            accounts = finalAccounts
+            finishMutationIfCurrent(mutationID)
+            return .success(())
+        } catch let persistenceError as VaultPersistenceError
+            where persistenceError == .commitStateUnknown
+               || persistenceError == .atomicRecoveryFailed {
+
+            guard session == currentSessionGeneration,
+                  loadState == .loaded else {
+                finishMutationIfCurrent(mutationID)
+                return .failure(.commitStateUnknown)
+            }
+
+            accounts = []
+            loadState = .failed
+            storageAlert = VaultStorageAlert(
+                title: "تعذر الوصول إلى الخزنة",
+                message: "تعذر تأكيد حالة الاستعادة بأمان. لم تُنشر أي بيانات مستعادة. أعد فتح الخزنة للتحقق من حالتها."
+            )
+            finishMutationIfCurrent(mutationID)
+            return .failure(.commitStateUnknown)
+        } catch {
+            guard session == currentSessionGeneration,
+                  loadState == .loaded else {
+                finishMutationIfCurrent(mutationID)
+                return .failure(.saveFailed)
+            }
+
+            accounts = snapshot
+            storageAlert = VaultStorageAlert(
+                title: "تعذر استعادة النسخة الاحتياطية",
+                message: "تعذر حفظ الاستعادة بأمان. بقيت حساباتك الحالية دون تغيير. حاول مرة أخرى."
+            )
+            finishMutationIfCurrent(mutationID)
+            return .failure(.saveFailed)
+        }
+    }
+
     func deleteAccount(id: UUID) async -> Result<Void, VaultMutationError> {
         guard loadState == .loaded else {
             return .failure(.storeNotLoaded)

@@ -6,6 +6,7 @@ struct AppRootView: View {
   @StateObject private var editorSession = AccountEditorSession()
   @StateObject private var navigationSession = VaultNavigationSession()
   @StateObject private var googleImportSession = GoogleAuthenticatorImportSession()
+  @StateObject private var backupRestoreSession = VaultBackupRestoreSession()
 
   var body: some View {
     Group {
@@ -44,6 +45,7 @@ struct AppRootView: View {
         .environmentObject(editorSession)
         .environmentObject(navigationSession)
         .environmentObject(googleImportSession)
+        .environmentObject(backupRestoreSession)
     case .failed:
       VStack(spacing: 16) {
         Text("تعذر الوصول إلى الخزنة")

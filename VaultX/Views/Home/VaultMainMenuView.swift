@@ -3,6 +3,7 @@ import SwiftUI
 struct VaultMainMenuView: View {
     let onClose: () -> Void
     let onGoogleAuthenticatorImport: () -> Void
+    let onBackupRestore: () -> Void
     let onSecuritySettings: () -> Void
 
     var body: some View {
@@ -37,6 +38,12 @@ struct VaultMainMenuView: View {
                 title: "استيراد من Google Authenticator",
                 systemImage: "square.and.arrow.down",
                 action: onGoogleAuthenticatorImport
+            )
+
+            menuButton(
+                title: "النسخ الاحتياطي والاستعادة",
+                systemImage: "externaldrive.fill.badge.timemachine",
+                action: onBackupRestore
             )
 
             menuButton(
@@ -99,6 +106,7 @@ struct VaultMainMenuView: View {
     VaultMainMenuView(
         onClose: {},
         onGoogleAuthenticatorImport: {},
+        onBackupRestore: {},
         onSecuritySettings: {}
     )
     .frame(width: 340)

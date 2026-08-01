@@ -6,5 +6,44 @@
 	<string>VaultX uses Face ID to securely unlock your vault.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>VaultX uses the camera only to scan two-factor authentication QR codes locally on your device.</string>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.smartsphere.vaultx.backup</string>
+			<key>UTTypeDescription</key>
+			<string>VaultX Encrypted Backup</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>vaultx</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/vnd.smartsphere.vaultx-backup</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>VaultX Encrypted Backup</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.smartsphere.vaultx.backup</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

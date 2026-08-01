@@ -5,6 +5,7 @@ final class VaultNavigationSession: ObservableObject {
   @Published var path: [UUID] = []
   @Published var isMenuPresented = false
   @Published var isShowingGoogleImport = false
+  @Published var isShowingBackupRestore = false
   @Published var isShowingSecuritySettings = false
 }
 
@@ -14,6 +15,7 @@ struct VaultHomeView: View {
   @EnvironmentObject private var editorSession: AccountEditorSession
   @EnvironmentObject private var navigationSession: VaultNavigationSession
   @EnvironmentObject private var googleImportSession: GoogleAuthenticatorImportSession
+  @EnvironmentObject private var backupRestoreSession: VaultBackupRestoreSession
   @Environment(\.scenePhase) private var scenePhase
   @State private var accountPendingDeletion: VaultAccount?
   @State private var showingDeleteConfirmation = false
@@ -147,6 +149,10 @@ struct VaultHomeView: View {
             .environment(\.layoutDirection, .rightToLeft)
         }
       }
+      .navigationDestination(isPresented: backupRestorePresentationBinding) {
+        VaultBackupRestoreView()
+          .environmentObject(backupRestoreSession)
+      }
       .navigationDestination(isPresented: securitySettingsPresentationBinding) {
         VaultSecuritySettingsView()
       }
@@ -268,6 +274,7 @@ struct VaultHomeView: View {
         VaultMainMenuView(
           onClose: closeMenu,
           onGoogleAuthenticatorImport: openGoogleAuthenticatorImport,
+          onBackupRestore: openBackupRestore,
           onSecuritySettings: openSecuritySettings
         )
         .frame(width: menuWidth)
@@ -309,6 +316,7 @@ struct VaultHomeView: View {
     appState.currentState == .unlocked
       && navigationSession.path.isEmpty
       && !navigationSession.isShowingGoogleImport
+      && !navigationSession.isShowingBackupRestore
       && !navigationSession.isShowingSecuritySettings
       && !editorSession.isPresented
       && !showingDeleteConfirmation
@@ -395,11 +403,31 @@ struct VaultHomeView: View {
     }
   }
 
+  private func openBackupRestore() {
+    closeMenu()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+      navigationSession.isShowingBackupRestore = true
+    }
+  }
+
   private func openSecuritySettings() {
     closeMenu()
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
       navigationSession.isShowingSecuritySettings = true
     }
+  }
+
+  private var backupRestorePresentationBinding: Binding<Bool> {
+    Binding(
+      get: { navigationSession.isShowingBackupRestore },
+      set: { isPresented in
+        if isPresented {
+          navigationSession.isShowingBackupRestore = true
+        } else if appState.currentState == .unlocked {
+          navigationSession.isShowingBackupRestore = false
+        }
+      }
+    )
   }
 
   private var securitySettingsPresentationBinding: Binding<Bool> {
@@ -450,6 +478,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultBackupRestoreSession())
       .environmentObject(VaultSecuritySettings())
       .preferredColorScheme(.dark)
   }
@@ -461,6 +490,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultBackupRestoreSession())
       .environmentObject(VaultSecuritySettings())
       .preferredColorScheme(.light)
   }
@@ -472,6 +502,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultBackupRestoreSession())
       .environmentObject(VaultSecuritySettings())
       .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
   }
@@ -492,6 +523,7 @@ struct VaultHomeView: View {
       .environmentObject(AccountEditorSession())
       .environmentObject(VaultNavigationSession())
       .environmentObject(GoogleAuthenticatorImportSession())
+      .environmentObject(VaultBackupRestoreSession())
       .environmentObject(VaultSecuritySettings())
       .preferredColorScheme(.dark)
   }
