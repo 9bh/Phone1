@@ -272,3 +272,21 @@ final class VaultBackupStoreTests: XCTestCase {
         XCTAssertEqual(saved, [old])
     }
 }
+
+final class VaultBackupFileAccessTests: XCTestCase {
+    func testVaultXExtensionIsAcceptedCaseInsensitively() {
+        XCTAssertTrue(
+            VaultBackupFileAccess.isSupportedBackupURL(
+                URL(fileURLWithPath: "/tmp/Backup.VAULTX")
+            )
+        )
+    }
+
+    func testUnrelatedExtensionIsRejected() {
+        XCTAssertFalse(
+            VaultBackupFileAccess.isSupportedBackupURL(
+                URL(fileURLWithPath: "/tmp/Backup.txt")
+            )
+        )
+    }
+}

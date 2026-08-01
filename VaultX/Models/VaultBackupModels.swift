@@ -160,6 +160,8 @@ final class VaultBackupRestoreSession: ObservableObject {
     @Published var reviewItems: [VaultBackupReviewItem] = []
     @Published var isBusy = false
     @Published var resultMessage: String?
+    @Published var shouldPresentPasswordPrompt = false
+    @Published var fileOpenErrorMessage: String?
 
     var summary: VaultBackupSummary? {
         guard let payload else { return nil }
@@ -168,13 +170,16 @@ final class VaultBackupRestoreSession: ObservableObject {
 
     func prepare(
         encryptedData: Data,
-        filename: String
+        filename: String,
+        requestPasswordPrompt: Bool = false
     ) {
         encryptedFileData = encryptedData
         sourceFilename = filename
         payload = nil
         reviewItems = []
         resultMessage = nil
+        fileOpenErrorMessage = nil
+        shouldPresentPasswordPrompt = requestPasswordPrompt
     }
 
     func setDecryptedPayload(
@@ -194,5 +199,7 @@ final class VaultBackupRestoreSession: ObservableObject {
         payload = nil
         reviewItems = []
         isBusy = false
+        shouldPresentPasswordPrompt = false
+        fileOpenErrorMessage = nil
     }
 }

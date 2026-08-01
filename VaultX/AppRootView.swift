@@ -24,6 +24,7 @@ struct AppRootView: View {
       }
     }
     .animation(.easeInOut, value: appState.currentState)
+    .onOpenURL(perform: handleIncomingFileURL)
     .task(id: appState.currentState) {
       if appState.currentState == .unlocked {
         TOTPClock.shared.start()
@@ -33,6 +34,46 @@ struct AppRootView: View {
         accountsStore.lockAndClear()
       }
     }
+  }
+
+
+
+  private func handleIncomingFileURL(_ url: URL) {
+    guard VaultBackupFileAccess.isSupportedBackupURL(url) else { return }
+
+    backupRestoreSession.isBusy = true
+    Task {
+      do {
+        let data = try await VaultBackupFileAccess.readBackupData(from: url)
+        backupRestoreSession.prepare(
+          encryptedData: data,
+          filename: url.lastPathComponent,
+          requestPasswordPrompt: true
+        )
+        backupRestoreSession.isBusy = false
+        navigationSession.path = []
+        navigationSession.isMenuPresented = false
+        navigationSession.isShowingGoogleImport = false
+        navigationSession.isShowingSecuritySettings = false
+        navigationSession.isShowingBackupRestore = true
+      } catch {
+        backupRestoreSession.isBusy = false
+        backupRestoreSession.fileOpenErrorMessage = backupFileErrorMessage(error)
+        navigationSession.path = []
+        navigationSession.isMenuPresented = false
+        navigationSession.isShowingGoogleImport = false
+        navigationSession.isShowingSecuritySettings = false
+        navigationSession.isShowingBackupRestore = true
+      }
+    }
+  }
+
+  private func backupFileErrorMessage(_ error: Error) -> String {
+    if let localized = error as? LocalizedError,
+       let description = localized.errorDescription {
+      return description
+    }
+    return "تعذر قراءة ملف النسخة الاحتياطية."
   }
 
   @ViewBuilder

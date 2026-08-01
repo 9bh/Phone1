@@ -29,3 +29,39 @@ struct VaultBackupDocument: FileDocument {
         FileWrapper(regularFileWithContents: data)
     }
 }
+
+enum VaultBackupFileAccess {
+    static func isSupportedBackupURL(_ url: URL) -> Bool {
+        url.pathExtension.caseInsensitiveCompare("vaultx") == .orderedSame
+    }
+
+    static func readBackupData(from url: URL) async throws -> Data {
+        guard isSupportedBackupURL(url) else {
+            throw VaultBackupError.invalidBackupFile
+        }
+
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer {
+            if accessed {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        return try await Task.detached(priority: .userInitiated) {
+            let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            guard values.isRegularFile != false else {
+                throw VaultBackupError.fileReadFailed
+            }
+            if let size = values.fileSize,
+               size > VaultBackupCryptoService.maximumFileSize {
+                throw VaultBackupError.fileTooLarge
+            }
+
+            let data = try Data(contentsOf: url, options: .mappedIfSafe)
+            guard data.count <= VaultBackupCryptoService.maximumFileSize else {
+                throw VaultBackupError.fileTooLarge
+            }
+            return data
+        }.value
+    }
+}

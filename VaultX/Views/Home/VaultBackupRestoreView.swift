@@ -169,7 +169,7 @@ struct VaultBackupRestoreView: View {
         }
         .fileImporter(
             isPresented: $isShowingFileImporter,
-            allowedContentTypes: [.vaultXBackup],
+            allowedContentTypes: [.vaultXBackup, .data],
             allowsMultipleSelection: false,
             onCompletion: handleFileImport
         )
@@ -201,6 +201,15 @@ struct VaultBackupRestoreView: View {
             guard let message else { return }
             alert = VaultBackupAlert(title: "تمت الاستعادة", message: message)
             session.resultMessage = nil
+        }
+        .onAppear(perform: consumePendingFileOpenEvents)
+        .onChange(of: session.shouldPresentPasswordPrompt) { _, requested in
+            guard requested else { return }
+            consumePendingFileOpenEvents()
+        }
+        .onChange(of: session.fileOpenErrorMessage) { _, message in
+            guard message != nil else { return }
+            consumePendingFileOpenEvents()
         }
     }
 
@@ -291,6 +300,10 @@ struct VaultBackupRestoreView: View {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
+            guard VaultBackupFileAccess.isSupportedBackupURL(url) else {
+                showError(VaultBackupError.invalidBackupFile)
+                return
+            }
             readBackupFile(from: url)
         case .failure(let error):
             if (error as? CocoaError)?.code != .userCancelled {
@@ -301,42 +314,41 @@ struct VaultBackupRestoreView: View {
 
     private func readBackupFile(from url: URL) {
         session.isBusy = true
-        let accessed = url.startAccessingSecurityScopedResource()
 
         Task {
-            defer {
-                if accessed {
-                    url.stopAccessingSecurityScopedResource()
-                }
-            }
-
             do {
-                let data = try await Task.detached(priority: .userInitiated) {
-                    let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
-                    guard values.isRegularFile != false else {
-                        throw VaultBackupError.fileReadFailed
-                    }
-                    if let size = values.fileSize,
-                       size > VaultBackupCryptoService.maximumFileSize {
-                        throw VaultBackupError.fileTooLarge
-                    }
-                    let data = try Data(contentsOf: url, options: .mappedIfSafe)
-                    guard data.count <= VaultBackupCryptoService.maximumFileSize else {
-                        throw VaultBackupError.fileTooLarge
-                    }
-                    return data
-                }.value
-
+                let data = try await VaultBackupFileAccess.readBackupData(from: url)
                 session.prepare(
                     encryptedData: data,
-                    filename: url.lastPathComponent
+                    filename: url.lastPathComponent,
+                    requestPasswordPrompt: true
                 )
                 session.isBusy = false
-                isShowingDecryptPassword = true
+                consumePendingFileOpenEvents()
             } catch {
                 session.isBusy = false
                 showError(error)
             }
+        }
+    }
+
+
+    private func consumePendingFileOpenEvents() {
+        if let message = session.fileOpenErrorMessage {
+            session.fileOpenErrorMessage = nil
+            alert = VaultBackupAlert(
+                title: "تعذر فتح النسخة الاحتياطية",
+                message: message
+            )
+        }
+
+        guard session.shouldPresentPasswordPrompt,
+              session.encryptedFileData != nil,
+              session.payload == nil else { return }
+
+        session.shouldPresentPasswordPrompt = false
+        DispatchQueue.main.async {
+            isShowingDecryptPassword = true
         }
     }
 
