@@ -284,10 +284,6 @@ struct VaultHomeView: View {
         .shadow(color: .black.opacity(0.3 * presentationProgress), radius: 24, x: 10, y: 0)
         .offset(x: -menuWidth * (1 - presentationProgress))
         .allowsHitTesting(navigationSession.isMenuPresented)
-        .gesture(
-          menuCloseGesture(menuWidth: menuWidth),
-          including: navigationSession.isMenuPresented ? .all : .none
-        )
 
         if canOpenMenuFromEdge && !navigationSession.isMenuPresented {
           Color.clear
@@ -298,6 +294,10 @@ struct VaultHomeView: View {
             .accessibilityHidden(true)
         }
       }
+      .simultaneousGesture(
+        menuCloseGesture(menuWidth: menuWidth),
+        including: navigationSession.isMenuPresented ? .all : .none
+      )
       .environment(\.layoutDirection, .leftToRight)
       .accessibilityHidden(!navigationSession.isMenuPresented && !isMenuDragging)
       .animation(.easeInOut(duration: 0.24), value: navigationSession.isMenuPresented)
