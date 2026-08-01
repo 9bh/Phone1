@@ -24,6 +24,8 @@ struct VaultBackupRestoreView: View {
     @State private var isShowingReplaceConfirmation = false
     @State private var isShowingFileImporter = false
     @State private var isShowingFileExporter = false
+    @State private var isFileImporterPresentationActive = false
+    @State private var isFileExporterPresentationActive = false
     @State private var exportDocument: VaultBackupDocument?
     @State private var exportFilename = "VaultX_Backup"
     @State private var alert: VaultBackupAlert?
@@ -176,9 +178,18 @@ struct VaultBackupRestoreView: View {
             document: exportDocument,
             contentType: .vaultXBackup,
             defaultFilename: exportFilename,
-            onCompletion: handleFileExport,
-            onCancellation: handleFileExportCancellation
+            onCompletion: handleFileExport
         )
+        .onChange(of: isShowingFileImporter) { _, isPresented in
+            if !isPresented {
+                finishFileImporterPresentation()
+            }
+        }
+        .onChange(of: isShowingFileExporter) { _, isPresented in
+            if !isPresented {
+                finishFileExporterPresentation()
+            }
+        }
         .alert(item: $alert) { alert in
             Alert(
                 title: Text(alert.title),
@@ -259,6 +270,7 @@ struct VaultBackupRestoreView: View {
                 exportFilename = defaultBackupFilename
                 session.isBusy = false
                 appState.beginTrustedSystemPresentation()
+                isFileExporterPresentationActive = true
                 isShowingFileExporter = true
             } catch {
                 session.isBusy = false
@@ -269,11 +281,12 @@ struct VaultBackupRestoreView: View {
 
     private func chooseBackupFile() {
         appState.beginTrustedSystemPresentation()
+        isFileImporterPresentationActive = true
         isShowingFileImporter = true
     }
 
     private func handleFileImport(_ result: Result<[URL], Error>) {
-        appState.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
+        finishFileImporterPresentation()
 
         switch result {
         case .success(let urls):
@@ -384,8 +397,7 @@ struct VaultBackupRestoreView: View {
     }
 
     private func handleFileExport(_ result: Result<URL, Error>) {
-        appState.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
-        exportDocument = nil
+        finishFileExporterPresentation()
 
         switch result {
         case .success:
@@ -398,7 +410,15 @@ struct VaultBackupRestoreView: View {
         }
     }
 
-    private func handleFileExportCancellation() {
+    private func finishFileImporterPresentation() {
+        guard isFileImporterPresentationActive else { return }
+        isFileImporterPresentationActive = false
+        appState.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
+    }
+
+    private func finishFileExporterPresentation() {
+        guard isFileExporterPresentationActive else { return }
+        isFileExporterPresentationActive = false
         appState.endTrustedSystemPresentation(lockIfStillBackgrounded: false)
         exportDocument = nil
     }
